@@ -1,24 +1,76 @@
 // gesture.js
-export async function startGesture(onUpdate){
-  // tenta carregar libs
+let handsInstance = null;
+let cameraInstance = null;
+let streamRef = null;
+let videoEl = null;
+let preloadDone = false;
+let kbHandler = null;
+
+export async function preloadGesture() {
+  if (preloadDone) return;
   await ensureScripts();
-  // se não houver MediaPipe, ativa fallback de teclado
-  if (!window.Hands || !window.Camera) {
-    console.warn('MediaPipe Hands não disponível. Usando fallback (teclas O/C).');
+
+  // cria video oculto e pede permissão já
+  videoEl = document.createElement('video');
+  videoEl.playsInline = true; videoEl.muted = true; videoEl.autoplay = true;
+  videoEl.style.position = 'fixed';
+  videoEl.style.left = '-9999px';
+  document.body.appendChild(videoEl);
+
+  try {
+    streamRef = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+    videoEl.srcObject = streamRef;
+
+    // cria Hands e “aquece”
+    handsInstance = new window.Hands({
+      locateFile: (file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+    });
+    handsInstance.setOptions({
+      maxNumHands: 4,
+      modelComplexity: 0,
+      minDetectionConfidence: 0.6,
+      minTrackingConfidence: 0.6
+    });
+
+    // roda a pipeline com alguns frames para “warm up”
+    const warmup = new window.Camera(videoEl, {
+      onFrame: async () => { await handsInstance.send({ image: videoEl }); },
+      width: 640, height: 480
+    });
+    await warmup.start();
+    // roda ~10 frames
+    await new Promise(r => setTimeout(r, 400));
+    await warmup.stop();
+
+    preloadDone = true;
+  } catch (err) {
+    console.warn('Falha ao pré-carregar câmera/mediapipe, usando fallback:', err);
+    // se não há câmera, pelo menos os scripts já estão no cache
+    preloadDone = true;
+  }
+}
+
+export async function startGesture(onUpdate){
+  await ensureScripts();
+
+  // fallback teclado se câmera indisponível
+  if (!navigator.mediaDevices?.getUserMedia) {
     enableKeyboardFallback(onUpdate);
     return { stop: ()=>disableKeyboardFallback() };
   }
 
-  const video = document.createElement('video');
-  video.playsInline = true; video.muted = true; video.autoplay = true;
-  const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
-  video.srcObject = stream;
+  // se ainda não preparamos, faça agora (vai pedir permissão 1x)
+  if (!preloadDone) await preloadGesture();
 
-  const hands = new window.Hands({ locateFile: (file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}` });
-  hands.setOptions({ maxNumHands: 4, modelComplexity: 0, minDetectionConfidence: 0.6, minTrackingConfidence: 0.6 });
+  // se não temos Hands (deu erro na permissão), ativa fallback
+  if (!handsInstance || !videoEl) {
+    console.warn('Hands/câmera indisponíveis. Fallback O/C.');
+    enableKeyboardFallback(onUpdate);
+    return { stop: ()=>disableKeyboardFallback() };
+  }
 
-  hands.onResults((res)=>{
-    // conta quantas "mãos abertas" vs "fechadas" com heurística simples de dedos estendidos
+  // instancia a câmera “definitiva” para a votação
+  handsInstance.onResults((res)=>{
     let open=0, closed=0;
     if (res.multiHandLandmarks) {
       res.multiHandLandmarks.forEach(lms=>{
@@ -29,34 +81,30 @@ export async function startGesture(onUpdate){
     onUpdate({ open, closed });
   });
 
-  const camera = new window.Camera(video, {
-    onFrame: async ()=> { await hands.send({ image: video }); },
+  cameraInstance = new window.Camera(videoEl, {
+    onFrame: async ()=> { await handsInstance.send({ image: videoEl }); },
     width: 640, height: 480
   });
-  camera.start();
+  await cameraInstance.start();
 
   return {
     stop: ()=>{
-      stream.getTracks().forEach(t=>t.stop());
-      camera.stop();
-      hands.close && hands.close();
+      cameraInstance && cameraInstance.stop();
+      cameraInstance = null;
+      // NÃO paramos o stream nem destruímos o Hands para reuso em próximas votações
     }
   };
 }
 
 function countExtendedFingers(lms){
-  // heurística simples: compara ângulos/posições dos dedos vs palma
-  // polegar: 4>3>2 em x (mão direita) ou < (mão esquerda); simplificamos usando distâncias y
   const wrist = lms[0];
   let ext = 0;
-  // indicadores: indices das pontas 8,12,16,20 e das bases 5,9,13,17
   [[8,5],[12,9],[16,13],[20,17]].forEach(([tip, base])=>{
-    if (lms[tip].y < lms[base].y) ext++; // ponta acima da base -> dedo estendido (aprox)
+    if (lms[tip].y < lms[base].y) ext++;
   });
   return ext;
 }
 
-let kbHandler=null;
 function enableKeyboardFallback(onUpdate){
   kbHandler = (e)=>{
     if (e.key==='o' || e.key==='O') onUpdate({ open: 3, closed: 0 });
@@ -70,8 +118,7 @@ function disableKeyboardFallback(){
 }
 
 async function ensureScripts(){
-  // carrega mediapipe hands e camera utils se ainda não estiverem presentes
-  async function load(src){ return new Promise(r=>{ const s=document.createElement('script'); s.src=src; s.onload=r; document.head.appendChild(s); }); }
-  if (!window.Hands) await load('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js');
-  if (!window.Camera) await load('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js');
+  async function load(src){ return new Promise(r=>{ const s=document.createElement('script'); s.src=src; s.onload=r; s.async=true; document.head.appendChild(s); }); }
+  if (!window.Hands)   await load('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js');
+  if (!window.Camera)  await load('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js');
 }

@@ -7,9 +7,7 @@ import { gsapLike } from './utils.js';
 import { setupUIBindings, renderControls, clearControls } from './ui.js';
 import { loadContent, getContent } from './contentloader.js'; // << corrigido C/L
 import { initCenterSim, updateCenterSim, setCenterSimColor, loadNodeSimulation, disposeNodeSimulation, createRTSimulation, getUISchema } from './simulations.js';
-import { startGesture } from './gesture.js';
-
-
+import { startGesture, preloadGesture } from './gesture.js';
 
 const container = document.getElementById('container');
 const nodeTitle = document.getElementById('nodeTitle');
@@ -110,6 +108,10 @@ async function init(){
   }
 });*/
 
+preloadGesture().then(()=>{
+  console.log('Gestos pré-carregados');
+}).catch(()=>{ /* segue normal com fallback */ });
+
   setupUIBindings(); // sliders/botões
 
   animate();
@@ -156,11 +158,21 @@ function onPointerDown(e){
 
 function startVote(nodeId){
   const options = nextOptions(nodeId);
-  if (options.length < 2){
+
+  // 0 saídas: fim real
+  if (options.length === 0){
     statusEl.textContent = 'Fim do caminho.';
     return;
   }
-  const [optOpen, optClosed] = options; // convenciona: mãos abertas -> 1ª opção, fechadas -> 2ª
+
+  // 1 saída: segue direto sem overlay nem gestos
+  if (options.length === 1){
+    gotoNode(options[0].id);
+    return;
+  }
+
+  // 2+ saídas: votação normal (usamos as 2 primeiras)
+  const [optOpen, optClosed] = options.slice(0,2);
 
   showVoteOverlay(optOpen, optClosed);
 
@@ -190,24 +202,21 @@ function startVote(nodeId){
 }
 
 function nextOptions(nodeId){
-  // usa edgesData: pega arestas que saem de nodeId
+  // saídas do nó
   const outs = edgesData.filter(([a,_])=> a===nodeId).map(([_,b])=> b);
-  // mapeia para {id, label}
+  // mapeia para {id,label}
   const map = id => ({ id, label: (nodesData.find(n=>n.id===id)?.label) || id });
-  // Se houver mais de 2, pega 2 primeiros
-  return outs.slice(0,2).map(map);
+  return outs.map(map); // devolve todas (startVote decide como usar)
 }
 
 function gotoNode(targetId){
-  // Encerra sim atual (se houver) e entra no novo nó
-  // 1) encontra o group do alvo
   const nodeGroup = getNodeGroups(mindmapGroup).find(g=> g.userData?.id === targetId);
   if (!nodeGroup){
     statusEl.textContent = `Não encontrei o nó ${targetId}`;
     return;
   }
 
-  // limpa a sim local do nó atual
+  // limpar sim local do nó atual
   getNodeGroups(mindmapGroup).forEach(g=>{
     if (g.userData?.simRT){
       try { g.userData.simRT.dispose && g.userData.simRT.dispose(); } catch(_){}
@@ -216,7 +225,6 @@ function gotoNode(targetId){
     }
   });
 
-  // foca e pluga a sim local do novo nó
   currentNodeId = targetId;
   nodeGroup.userData.isActive = true;
   focusNode(targetId, nodeGroup);
@@ -236,6 +244,10 @@ function gotoNode(targetId){
     });
 
     statusEl.textContent = `Simulação: ${content.title}`;
+
+    // carrega + inicia o roteiro automaticamente no novo nó
+    loadScriptForNode(targetId);
+    runScript();
   }, 250);
 }
 
@@ -302,22 +314,20 @@ async function enterNode(id, nodeGroup){
     nodeTitle.textContent = content.title;
     nodeText.innerHTML = `<p>${content.text || '(sem conteúdo)'}</p>`;
 
-    // === UI dinâmica ===
     const schema = getUISchema(id, simRT.group);
     renderControls(schema, (key, value)=>{
       const api = simRT.group?.userData?.api;
       if (api && api.set) api.set(key, value);
     });
 
+    // prepara + inicia o roteiro automaticamente
     loadScriptForNode(id);
+    runScript(); // <<< começa sozinho
 
-    centerSimGroup.visible = false; // ficamos só com a sim local
+    centerSimGroup.visible = false;
     mode = 'sim';
   }, 300);
 }
-
-
-
 
 function exitToGraph(){
   if (mode !== 'sim' && mode !== 'node-zoom') return;
