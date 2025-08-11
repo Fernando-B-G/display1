@@ -1,0 +1,62 @@
+{
+  "1": {
+    "title": "1 — Introdução: do espectro contínuo às linhas",
+    "text": "Nosso ponto de partida é a luz: de um lado, o espectro contínuo (corpo negro); de outro, espectros de linhas de elementos. Essas duas pistas abrem dois caminhos que partem daqui: A) entender as linhas do hidrogênio e os modelos atômicos (2→3→9→4) e B) compreender a radiação térmica e a quantização da luz (6→7→10→8). Ambos convergem mais adiante no formalismo quântico (5a→5b→5c).",
+    "simulacao": "Prisma + espectrógrafo: alternar fonte contínua e fonte de linhas e comparar no detector."
+  },
+  "2": {
+    "title": "2 — Espectro do hidrogênio: séries de Balmer e Lyman",
+    "text": "O hidrogênio revelou poucas linhas muito regulares. Balmer e Lyman organizaram-nas em séries com relações simples — um sinal de níveis discretos de energia. Esse padrão pede um modelo que gere transições discretas: seguiremos então para o átomo de Bohr (3).",
+    "simulacao": "Emissor atômico: saltos eletrônicos geram fótons; espectrógrafo exibe picos em tempo real."
+  },
+  "3": {
+    "title": "3 — Átomo de Bohr: níveis quantizados",
+    "text": "Bohr propôs órbitas com energias quantizadas. As transições entre essas órbitas explicam as linhas do hidrogênio e reproduzem as séries observadas. A seguir, precisamos classificar estados com mais detalhes (9) e compreender por que linhas se multiplicam (4).",
+    "simulacao": "Modelo de Bohr interativo: escolher n inicial/final, emitir fóton com λ=hc/ΔE, comparar com série."
+  },
+  "4": {
+    "title": "4 — Estrutura fina, spin e Stern–Gerlach",
+    "text": "Medições de alta precisão revelaram que muitas linhas são múltiplas. Correções relativísticas e o spin do elétron explicam a estrutura fina. Stern–Gerlach mostrou a quantização do spin ao separar um feixe em duas trajetórias. Esse detalhe prepara o salto para um formalismo capaz de incluir todas essas sutilezas (5a).",
+    "simulacao": "Feixe + gradiente magnético (Stern–Gerlach) e painel espectral com divisão de linhas (Zeeman)."
+  },
+  "5a": {
+    "title": "5a — Equação de Schrödinger: função de onda e orbitais",
+    "text": "Schrödinger introduz a função de onda ψ. Sua evolução determina probabilidades — |ψ|² — em vez de trajetórias. Orbitais são estados estacionários: padrões de probabilidade que explicam níveis e formas (s, p, d...). Essa linguagem ondulatória se conecta ao que vimos nos espectros e prepara o diálogo com a abordagem matricial (5b).",
+    "simulacao": "Visualizador de orbitais (pré-computado): selecionar n, l, m e ver densidade |ψ|²."
+  },
+  "5b": {
+    "title": "5b — Mecânica matricial e princípio da incerteza",
+    "text": "Heisenberg descreve observáveis como operadores que, em geral, não comutam. Disso nasce o princípio da incerteza: Δx·Δp ≥ ħ/2. É uma característica da estrutura matemática — não uma falha experimental. Essa abordagem é matematicamente equivalente à de Schrödinger e ambas convergem para um formalismo unificado (5c).",
+    "simulacao": "Pacote de onda 1D: estreitar em x alarga a distribuição de p (FFT), mostrando Δx·Δp."
+  },
+  "5c": {
+    "title": "5c — Fechamento: formalismo unificado",
+    "text": "As formulações de Schrödinger e Heisenberg são equivalentes. Dirac unifica e amplia o formalismo — notação bra-ket, operadores, spin. Modernamente: estados em espaço de Hilbert, observáveis como operadores lineares, evolução unitária. Esse formalismo explica linhas, estrutura fina, corpo negro, fotoelétrico e interferência.",
+    "simulacao": "Mapa conceitual reativo: clicar em ‘transição’ reencena Bohr+espectro; ‘interferência’ reabre dupla fenda."
+  },
+  "6": {
+    "title": "6 — Corpo negro e a catástrofe ultravioleta",
+    "text": "Clássicos previam energia infinita no ultravioleta. Planck resolve ao quantizar a troca de energia. Essa ideia inaugura a noção de quanta e prepara o passo seguinte: a luz como fótons em interações com matéria (7).",
+    "simulacao": "Curvas: Rayleigh-Jeans vs Planck com slider de temperatura e deslocamento de Wien."
+  },
+  "7": {
+    "title": "7 — Efeito fotoelétrico: fótons e limiar de frequência",
+    "text": "Einstein assume a luz como fótons de energia E=hν. Abaixo de uma frequência limiar não há emissão; acima, a energia cinética dos elétrons cresce com ν. Isso consolida a quantização da luz. Em paralelo, outra fonte de partículas surge sem iluminação externa: radioatividade (10).",
+    "simulacao": "Bancada fotoelétrica: variar intensidade e frequência, medir taxa e energia cinética."
+  },
+  "8": {
+    "title": "8 — de Broglie e difração: λ=h/p",
+    "text": "Partículas têm comportamento ondulatório. Difração de elétrons e dupla fenda exibem padrões de interferência que emergem estatisticamente quando detectamos impactos um a um. Com ou sem medição de caminho, o padrão muda — uma janela direta para o formalismo (5a–5c).",
+    "simulacao": "Emissor de elétrons 1 a 1: acumular impactos; ligar ‘detector de caminho’ remove franjas."
+  },
+  "9": {
+    "title": "9 — Momento angular e números quânticos",
+    "text": "Além do nível principal n, números l e m caracterizam forma e orientação; o spin completa o quadro. Esses números nascem das condições de contorno e simetrias da equação de onda e determinam regras de seleção espectrais. Voltemos então à estrutura fina (4) já entendendo a contagem de estados.",
+    "simulacao": "Modos angulares: variar l e m e ver nós e orientação; indicar níveis degenerados."
+  },
+  "10": {
+    "title": "10 — Radioatividade (Curie): α, β, γ",
+    "text": "Núcleos instáveis emitem espontaneamente partículas e radiação. Isso revelou a estrutura nuclear e gerou técnicas de feixes/detecção que depois permitiram observar a difração de elétrons (8).",
+    "simulacao": "Amostra radioativa com meia-vida; contagem Poisson; blindagem e atenuação por material."
+  }
+}
