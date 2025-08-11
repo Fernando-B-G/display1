@@ -2,11 +2,14 @@ import * as THREE from 'three';
 import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 
 import { createStars } from './starfield.js';
-import { buildMindmap, getNodeGroups, colorOf } from './graph.js';
-import { initCenterSim, updateCenterSim, setCenterSimColor } from './simulations.js';
+import { buildMindmap, getNodeGroups, colorOf, nodesData, edgesData } from './graph.js';
 import { gsapLike } from './utils.js';
-import { setupUIBindings } from './ui.js';
+import { setupUIBindings, renderControls, clearControls } from './ui.js';
 import { loadContent, getContent } from './contentloader.js'; // << corrigido C/L
+import { initCenterSim, updateCenterSim, setCenterSimColor, loadNodeSimulation, disposeNodeSimulation, createRTSimulation, getUISchema } from './simulations.js';
+import { startGesture } from './gesture.js';
+
+
 
 const container = document.getElementById('container');
 const nodeTitle = document.getElementById('nodeTitle');
@@ -14,17 +17,26 @@ const nodeText  = document.getElementById('nodeText');
 const statusEl  = document.getElementById('status');
 const playBtn   = document.getElementById('playBtn');
 const backBtn   = document.getElementById('backBtn');
+const btnPlay = document.getElementById('btnPlay');
+const btnPause = document.getElementById('btnPause');
+const btnStop = document.getElementById('btnStop');
+const scriptStatus = document.getElementById('scriptStatus');
+
+let scriptCtrl = { lines:[], idx:0, playing:false, paused:false, abort:false };
+
 
 let scene, camera, renderer, controls, clock;
 let starField, mindmapGroup, centerSimGroup;
 
-const NODE_ZOOM_DISTANCE = 5; // quanto menor, mais perto (antes estava ~26)
+const NODE_ZOOM_DISTANCE = 10; // quanto menor, mais perto (antes estava ~26)
 const GRAPH_MIN_DISTANCE = 30;
 const NODE_MIN_DISTANCE  = 3;   // pode usar 2 ou 1 se quiser mais perto
 
 const raycaster = new THREE.Raycaster();
 const mouse = new THREE.Vector2();
 
+let currentNodeId = null;
+let gestureSession = null;
 let mode = 'graph'; // 'graph' | 'node-zoom'
 
 init();
@@ -56,7 +68,7 @@ async function init(){
   controls = new OrbitControls(camera, renderer.domElement);
   controls.enableDamping = true;
   controls.dampingFactor = 0.08;
-  controls.minDistance = 30;
+  //controls.minDistance = 30;
   controls.maxDistance = 300;
   controls.target.set(40, 0, 0); // mira para o centro do mapa horizontal
 
@@ -79,16 +91,24 @@ async function init(){
   centerSimGroup = new THREE.Group();
   scene.add(centerSimGroup);
   initCenterSim(centerSimGroup);
+  centerSimGroup.visible = false;
 
   // 8) Eventos
   window.addEventListener('resize', onResize);
   renderer.domElement.addEventListener('pointerdown', onPointerDown);
   window.addEventListener('pointermove', onPointerMove);
   backBtn.addEventListener('click', exitToGraph);
+    btnPlay?.addEventListener('click', ()=> runScript());
+    btnPause?.addEventListener('click', ()=> pauseScript());
+    btnStop?.addEventListener('click', ()=> stopScript());
 
-  playBtn.addEventListener('click', () => {
-    statusEl.textContent = 'Roteiro: tocando (placeholder)';
-  });
+/*playBtn.addEventListener('click', () => {
+  if (mode === 'sim' && currentNodeId) {
+    playNodeScript(currentNodeId);
+  } else {
+    statusEl.textContent = 'Roteiro: selecione um nó e entre na simulação.';
+  }
+});*/
 
   setupUIBindings(); // sliders/botões
 
@@ -134,6 +154,116 @@ function onPointerDown(e){
   enterNode(node.userData.id, node);
 }
 
+function startVote(nodeId){
+  const options = nextOptions(nodeId);
+  if (options.length < 2){
+    statusEl.textContent = 'Fim do caminho.';
+    return;
+  }
+  const [optOpen, optClosed] = options; // convenciona: mãos abertas -> 1ª opção, fechadas -> 2ª
+
+  showVoteOverlay(optOpen, optClosed);
+
+  let remaining = 10;
+  updateVoteTimer(remaining);
+
+  if (gestureSession) { gestureSession.stop(); gestureSession=null; }
+  let openCount=0, closedCount=0;
+
+  startGesture(({open, closed})=>{
+    openCount = open; closedCount = closed;
+    updateVoteCounts(openCount, closedCount);
+  }).then(session=> gestureSession=session);
+
+  const tick = setInterval(()=>{
+    remaining--;
+    updateVoteTimer(remaining);
+    if (remaining <= 0){
+      clearInterval(tick);
+      if (gestureSession) { gestureSession.stop(); gestureSession=null; }
+      hideVoteOverlay();
+
+      const choose = (openCount >= closedCount) ? optOpen : optClosed;
+      gotoNode(choose.id);
+    }
+  }, 1000);
+}
+
+function nextOptions(nodeId){
+  // usa edgesData: pega arestas que saem de nodeId
+  const outs = edgesData.filter(([a,_])=> a===nodeId).map(([_,b])=> b);
+  // mapeia para {id, label}
+  const map = id => ({ id, label: (nodesData.find(n=>n.id===id)?.label) || id });
+  // Se houver mais de 2, pega 2 primeiros
+  return outs.slice(0,2).map(map);
+}
+
+function gotoNode(targetId){
+  // Encerra sim atual (se houver) e entra no novo nó
+  // 1) encontra o group do alvo
+  const nodeGroup = getNodeGroups(mindmapGroup).find(g=> g.userData?.id === targetId);
+  if (!nodeGroup){
+    statusEl.textContent = `Não encontrei o nó ${targetId}`;
+    return;
+  }
+
+  // limpa a sim local do nó atual
+  getNodeGroups(mindmapGroup).forEach(g=>{
+    if (g.userData?.simRT){
+      try { g.userData.simRT.dispose && g.userData.simRT.dispose(); } catch(_){}
+      delete g.userData.simRT;
+      g.userData.isActive = false;
+    }
+  });
+
+  // foca e pluga a sim local do novo nó
+  currentNodeId = targetId;
+  nodeGroup.userData.isActive = true;
+  focusNode(targetId, nodeGroup);
+
+  setTimeout(async ()=>{
+    const simRT = await createRTSimulation(targetId);
+    nodeGroup.userData.simRT = simRT;
+
+    const content = getContent(targetId) || { title:targetId, text:'(sem conteúdo)' };
+    nodeTitle.textContent = content.title;
+    nodeText.innerHTML = `<p>${content.text || '(sem conteúdo)'}</p>`;
+
+    const schema = getUISchema(targetId, simRT.group);
+    renderControls(schema, (key, value)=>{
+      const api = simRT.group?.userData?.api;
+      if (api && api.set) api.set(key, value);
+    });
+
+    statusEl.textContent = `Simulação: ${content.title}`;
+  }, 250);
+}
+
+// ===== Overlay helpers =====
+function showVoteOverlay(openOpt, closedOpt){
+  const ov = getVoteOverlay();
+  ov.classList.remove('hidden');
+  ov.querySelector('.open-label').textContent   = `MÃOS ABERTAS → ${openOpt.label}`;
+  ov.querySelector('.closed-label').textContent = `MÃOS FECHADAS → ${closedOpt.label}`;
+  ov.querySelector('.open-count').textContent = '0';
+  ov.querySelector('.closed-count').textContent = '0';
+}
+function hideVoteOverlay(){
+  getVoteOverlay().classList.add('hidden');
+}
+function updateVoteCounts(open, closed){
+  const ov = getVoteOverlay();
+  ov.querySelector('.open-count').textContent   = String(open);
+  ov.querySelector('.closed-count').textContent = String(closed);
+}
+function updateVoteTimer(n){
+  getVoteOverlay().querySelector('.timer').textContent = String(n);
+}
+function getVoteOverlay(){
+  return document.getElementById('voteOverlay');
+}
+
+
 function focusNode(id, nodeGroup){
   const content = getContent(id) || { title:id, text:'(sem conteúdo)' };
   nodeTitle.textContent = content.title;
@@ -157,34 +287,157 @@ function focusNode(id, nodeGroup){
 async function enterNode(id, nodeGroup){
   if (mode !== 'graph') return;
   mode = 'node-zoom';
+  currentNodeId = id;
 
-  // 1) marcar ativo (renderTarget maior = mais nítido) e focar
   nodeGroup.userData.isActive = true;
   focusNode(id, nodeGroup);
 
-  // 2) mostrar botão voltar
-  backBtn.classList.remove('hidden');
+  setTimeout(async () => {
+    const simRT = await createRTSimulation(id);
+    nodeGroup.userData.simRT = simRT;
+
+    backBtn.classList.remove('hidden');
+
+    const content = getContent(id) || { title:id, text:'(sem conteúdo)' };
+    nodeTitle.textContent = content.title;
+    nodeText.innerHTML = `<p>${content.text || '(sem conteúdo)'}</p>`;
+
+    // === UI dinâmica ===
+    const schema = getUISchema(id, simRT.group);
+    renderControls(schema, (key, value)=>{
+      const api = simRT.group?.userData?.api;
+      if (api && api.set) api.set(key, value);
+    });
+
+    loadScriptForNode(id);
+
+    centerSimGroup.visible = false; // ficamos só com a sim local
+    mode = 'sim';
+  }, 300);
 }
 
+
+
+
 function exitToGraph(){
-  if (mode !== 'node-zoom') return;
+  if (mode !== 'sim' && mode !== 'node-zoom') return;
   mode = 'graph';
 
-  // reduzir resolução dos RTs de todos os nós
-  getNodeGroups(mindmapGroup).forEach(g => g.userData.isActive = false);
+  // 1) desligar sim local (se existir) no nó ativo
+  const nodeGroups = getNodeGroups(mindmapGroup);
+  nodeGroups.forEach(g=>{
+    if (g.userData?.simRT){
+      try { g.userData.simRT.dispose && g.userData.simRT.dispose(); } catch(_){}
+      delete g.userData.simRT;
+    }
+    g.userData.isActive = false;
+  });
 
-  // voltar à visão geral horizontal
+  // 2) palco central segue invisível
+  disposeNodeSimulation(centerSimGroup);
+  centerSimGroup.visible = false;
+
+  // 3) voltar à visão geral
+  mindmapGroup.visible = true;
   const camTo = new THREE.Vector3(0, 24, 110);
   const tgtTo = new THREE.Vector3(40, 0, 0);
   gsapLike(camera.position, camera.position.clone(), camTo, 0.9);
   gsapLike(controls.target,  controls.target.clone(),  tgtTo, 0.9);
 
+    stopScript();
+    updateScriptStatus('');
+    clearControls();
 
-    // <-- restaura o clamp original
-  //controls.minDistance = GRAPH_MIN_DISTANCE;
   backBtn.classList.add('hidden');
   statusEl.textContent = 'Mapa: selecione um nó';
+  currentNodeId = null;
 }
+
+
+async function playNodeScript(id){
+  const content = getContent(id) || {};
+  const lines = Array.isArray(content.script) ? content.script
+              : Array.isArray(content.roteiro) ? content.roteiro
+              : (content.text ? [content.text] : []);
+
+  if (!lines.length) {
+    statusEl.textContent = 'Roteiro: (vazio)';
+    // mesmo sem roteiro, podemos iniciar a votação direto:
+    startVote(id);
+    return;
+  }
+
+  statusEl.textContent = 'Roteiro: tocando...';
+  for (let i=0;i<lines.length;i++){
+    nodeText.innerHTML = `<p>${lines[i]}</p>`;
+    await sleep(1800);
+  }
+  statusEl.textContent = 'Roteiro: concluído';
+
+  // === inicia a votação de caminho ===
+  startVote(id);
+}
+
+
+function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
+
+function updateScriptStatus(msg){
+  if (scriptStatus) scriptStatus.textContent = msg || '';
+}
+
+function loadScriptForNode(id){
+  const content = getContent(id) || {};
+  const lines = Array.isArray(content.script) ? content.script
+              : Array.isArray(content.roteiro) ? content.roteiro
+              : (content.text ? [content.text] : []);
+  scriptCtrl = { lines, idx:0, playing:false, paused:false, abort:false };
+  updateScriptStatus(lines.length ? 'pronto' : 'sem roteiro');
+}
+
+async function runScript(){
+  if (!currentNodeId) { statusEl.textContent = 'Selecione um nó para tocar o roteiro.'; return; }
+  if (!scriptCtrl.lines.length){ updateScriptStatus('sem roteiro'); startVote(currentNodeId); return; }
+  if (scriptCtrl.playing) return;
+
+  scriptCtrl.playing = true;
+  scriptCtrl.paused = false;
+  scriptCtrl.abort = false;
+  updateScriptStatus('tocando...');
+
+  while (scriptCtrl.idx < scriptCtrl.lines.length){
+    if (scriptCtrl.abort) break;
+    if (scriptCtrl.paused){ await sleep(120); continue; }
+
+    nodeText.innerHTML = `<p>${scriptCtrl.lines[scriptCtrl.idx]}</p>`;
+    scriptCtrl.idx++;
+    await sleep(1800); // cadência entre falas
+  }
+
+  scriptCtrl.playing = false;
+  if (!scriptCtrl.abort){
+    updateScriptStatus('concluído');
+    // dispara a votação de caminho
+    startVote(currentNodeId);
+  } else {
+    updateScriptStatus('interrompido');
+  }
+}
+
+function pauseScript(){
+  if (!scriptCtrl.playing) return;
+  scriptCtrl.paused = !scriptCtrl.paused;
+  updateScriptStatus(scriptCtrl.paused ? 'pausado' : 'tocando...');
+}
+
+function stopScript(){
+  if (!scriptCtrl.playing) { scriptCtrl.idx = 0; updateScriptStatus('pronto'); return; }
+  scriptCtrl.abort = true;
+  scriptCtrl.paused = false;
+  scriptCtrl.playing = false;
+  scriptCtrl.idx = 0;
+  updateScriptStatus('interrompido');
+}
+
 
 function animate(){
   requestAnimationFrame(animate);
@@ -194,29 +447,37 @@ function animate(){
   if (starField) starField.rotation.y += dt * 0.02;
 
   // --- renderizar previews nos renderTargets dos nós ---
-  const nodeGroups = getNodeGroups(mindmapGroup);
-  nodeGroups.forEach(node=>{
-    const { previewScene, previewCamera, rt, isActive, step } = node.userData || {};
-    if (!rt || !previewScene || !previewCamera) return;
+const nodeGroups = getNodeGroups(mindmapGroup);
+nodeGroups.forEach(node=>{
+  const { previewScene, previewCamera, rt, isActive, step, simRT } = node.userData || {};
+  if (!rt) return;
 
-    // animação da prévia do nó (se definida em nodePreviews)
+  // RT maior quando ativo (nítido), menor caso contrário
+  const targetW = isActive ? 1024 : 480;
+  const targetH = isActive ?  576 : 270;
+  if (rt.width !== targetW || rt.height !== targetH) rt.setSize(targetW, targetH);
+
+  renderer.setRenderTarget(rt);
+
+  if (simRT) {
+    // simulação real local (no lugar da prévia)
+    simRT.update && simRT.update(dt);
+    renderer.render(simRT.scene, simRT.camera);
+  } else if (previewScene && previewCamera) {
+    // prévia não-interativa
     if (typeof step === 'function') step(dt);
-
-    // RT maior quando ativo (nítido), menor caso contrário
-    const targetW = isActive ? 1024 : 480;
-    const targetH = isActive ?  576 : 270;
-    if (rt.width !== targetW || rt.height !== targetH) rt.setSize(targetW, targetH);
-
-    renderer.setRenderTarget(rt);
     renderer.render(previewScene, previewCamera);
-  });
-  renderer.setRenderTarget(null);
+  }
+
+});
+renderer.setRenderTarget(null);
+
 
 
   // manter os nós virados para a câmera
   nodeGroups.forEach(obj => obj.lookAt(camera.position));
 
-  updateCenterSim(centerSimGroup, dt);
+  if (centerSimGroup.visible) updateCenterSim(centerSimGroup, dt);
 
   controls.update();
   renderer.render(scene, camera);

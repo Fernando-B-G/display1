@@ -33,18 +33,44 @@
     </div>
   </div>
 
-  <!-- Painel de controles -->
-  <div class="panel-right">
-    <div class="control">
-      <label for="intensity">Intensidade (placeholder)</label>
-      <input id="intensity" type="range" min="0" max="100" value="50">
-    </div>
-    <div class="control">
-      <label for="speed">Velocidade (placeholder)</label>
-      <input id="speed" type="range" min="0" max="100" value="50">
-    </div>
-    <button id="playBtn">Play roteiro do nó</button>
+<!-- Painel de controles (direita) -->
+<div class="panel-right" id="controlsPanel">
+  <div id="scriptBar" class="script-bar">
+    <button id="btnPlay">▶︎ Roteiro</button>
+    <button id="btnPause">⏸</button>
+    <button id="btnStop">⏹</button>
+    <span id="scriptStatus" class="small"></span>
   </div>
+
+  <!-- Os sliders/toggles dinâmicos vão aqui -->
+  <div id="controlsHost"></div>
+</div>
+
+
+<!-- Overlay de votação -->
+<div id="voteOverlay" class="vote hidden">
+  <div class="vote-box">
+    <div class="vote-title">Escolha o próximo passo</div>
+    <div class="vote-instructions">Abra as mãos para a opção da esquerda. Feche as mãos para a da direita.</div>
+
+    <div class="vote-options">
+      <div class="vote-col">
+        <div class="vote-label open-label">MÃOS ABERTAS → (opção)</div>
+        <div class="vote-count open-count">0</div>
+      </div>
+      <div class="vote-timer">
+        <div class="timer">10</div>
+        <div class="timer-caption">segundos</div>
+      </div>
+      <div class="vote-col">
+        <div class="vote-label closed-label">MÃOS FECHADAS → (opção)</div>
+        <div class="vote-count closed-count">0</div>
+      </div>
+    </div>
+    <div class="vote-note">Permita o acesso à câmera. Sem câmera, use O (abertas) ou C (fechadas) no teclado.</div>
+  </div>
+</div>
+
 
   <div class="status" id="status">Pronto</div>
 

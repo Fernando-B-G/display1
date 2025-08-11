@@ -103,3 +103,50 @@ label{ display:block; font-size:13px; color:#bfeaff; margin-bottom:6px }
   z-index:10;
   pointer-events:none; /* não bloquear cliques; texto é só informativo */
 }
+
+/* Controls panel já existe como .panel-right */
+
+/* Votação */
+.vote {
+  position: absolute; inset: 0; display: flex; align-items: center; justify-content: center;
+  backdrop-filter: blur(4px);
+  z-index: 20;
+}
+.vote.hidden { display: none; }
+
+.vote-box {
+  min-width: 720px; max-width: 90vw;
+  background: rgba(0,0,0,0.55);
+  border: 1px solid rgba(255,255,255,0.08);
+  border-radius: 16px;
+  padding: 18px 22px;
+  color: #e6f2ff;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.6);
+}
+
+.vote-title { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+.vote-instructions { font-size: 14px; color: #bfeaff; margin-bottom: 14px; }
+
+.vote-options {
+  display: grid; grid-template-columns: 1fr 140px 1fr; gap: 18px; align-items: center;
+}
+
+.vote-col { text-align: center; }
+.vote-label { font-weight: 600; margin-bottom: 6px; }
+.vote-count { font-size: 40px; font-weight: 800; }
+
+.vote-timer { text-align: center; }
+.vote-timer .timer { font-size: 54px; font-weight: 900; }
+.vote-timer .timer-caption { font-size: 12px; color: #9fcff0; }
+
+.vote-note { margin-top: 10px; font-size: 12px; color: #9fcff0; text-align: center; }
+
+.script-bar{
+  display:flex; align-items:center; gap:8px; margin-bottom:12px;
+}
+.script-bar button{
+  padding:8px 10px; border-radius:8px; border:1px solid var(--panel-border);
+  background:rgba(255,255,255,0.08); color:#e6f2ff; cursor:pointer;
+}
+.script-bar button:hover{ background:rgba(255,255,255,0.14) }
+#scriptStatus{ margin-left:auto; color:#9fcff0; }
