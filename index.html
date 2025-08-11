@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Protótipo — Nó 5a (Equação de Schrödinger)</title>
+<style>
+  :root{--panel-bg:rgba(5,10,20,0.66);--panel-border:rgba(255,255,255,0.06);--accent:#66ccff;}
+  html,body{height:100%;margin:0;background:#000; font-family:Inter,Arial,Helvetica,sans-serif;color:#e6f2ff}
+  #container{position:relative;width:100%;height:100vh;overflow:hidden}
+  canvas{display:block}
+  /* Left text panel */
+  .panel-left{
+    position:absolute; left:18px; top:18px; width:28%; max-width:520px; bottom:18px;
+    background:var(--panel-bg); border:1px solid var(--panel-border); border-radius:12px; padding:18px; overflow:auto;
+    box-shadow:0 8px 30px rgba(0,0,0,0.6);
+    backdrop-filter: blur(6px);
+  }
+  .panel-left h2{margin:0 0 12px 0; font-size:20px}
+  .panel-left p{line-height:1.45; color:#cfeeff}
+  /* Right controls */
+  .panel-right{
+    position:absolute; right:18px; top:18px; width:260px; background:var(--panel-bg);
+    border:1px solid var(--panel-border); padding:12px; border-radius:12px; z-index:10;
+  }
+  .control { margin-bottom:12px }
+  label{display:block; font-size:13px; color:#bfeaff; margin-bottom:6px}
+  input[type=range]{width:100%}
+  button { width:100%; padding:10px; border-radius:8px; border:none; background:var(--accent); color:#012; font-weight:600; cursor:pointer }
+  .status {
+    position:absolute; left:50%; transform:translateX(-50%); bottom:18px; background:rgba(0,0,0,0.45); color:#bfeaff;
+    padding:8px 12px; border-radius:10px; border:1px solid var(--panel-border);
+  }
+  .gesture {
+    position:absolute; right:18px; bottom:18px; background:rgba(0,0,0,0.45); color:#fff; padding:8px 12px; border-radius:10px;
+    border:1px solid var(--panel-border);
+    font-weight:600;
+  }
+  .small { font-size:12px; color:#9fcff0 }
+  .hidden { display:none }
+  /* small helper */
+  .hint { font-size:12px; color:#9fcff0; margin-top:8px }
+</style>
+</head>
+<body>
+  <div id="container"></div>
+
+  <div class="panel-left" id="textPanel">
+    <h2>Equação de Schrödinger — Nó 5a</h2>
+    <p id="narrative">
+      Schrödinger propôs que a matéria podia ser descrita por uma função de onda ψ, cuja magnitude ao quadrado fornece a probabilidade de encontrar a partícula. Orbitais atômicos são regiões de alta probabilidade — não órbitas rígidas. Nesta experiência você verá uma visualização interativa de orbitais que responde aos números quânticos <em>n</em>, <em>l</em> e <em>m</em>. <br><br>
+      Primeiro ouça o roteiro: quando o modo “Play” é ativado, a câmera fará um foco, o texto será lido (narrativa visual) e então a simulação será deixada persistente para que visitantes manipulem os parâmetros. Use gestos para apontar ou escanear, ou abra o QR mostrado para controlar pelo celular.
+    </p>
+    <div class="hint">Dica: aproxime-se do display para que a câmera detecte mãos; para testes em desktop use o mouse.</div>
+  </div>
+
+  <div class="panel-right" id="controls">
+    <div class="control">
+      <label for="nRange">n (nível principal) — <span id="nVal">1</span></label>
+      <input id="nRange" type="range" min="1" max="4" step="1" value="1">
+    </div>
+    <div class="control">
+      <label for="lRange">l (azimutal) — <span id="lVal">0</span></label>
+      <input id="lRange" type="range" min="0" max="3" step="1" value="0">
+    </div>
+    <div class="control">
+      <label for="mRange">m (magnético) — <span id="mVal">0</span></label>
+      <input id="mRange" type="range" min="-3" max="3" step="1" value="0">
+    </div>
+    <div style="display:flex;gap:8px">
+      <button id="playBtn">Play roteiro</button>
+      <button id="resetBtn" style="background:#ef9a9a">Reset</button>
+    </div>
+    <div style="margin-top:8px" class="small">Gesto detectado: <span id="gestureLabel">Nenhum</span></div>
+  </div>
+
+  <div class="status" id="progressBar">Estado: mapa → nó 5a</div>
+  <div class="gesture" id="gestureBox">Gesto: —</div>
+  <div class="label" id="hint">Clique em um nó para aproximar e ver o setup.</div>
+    <script type="importmap">
+    {
+    "imports": {
+        "three": "https://unpkg.com/three@0.155.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.155.0/examples/jsm/"
+    }
+    }
+    </script>
+    <!-- Our Application Logic (as a module) -->
+    <script type="module" src="app.js"></script>
+</body>
+</html>
