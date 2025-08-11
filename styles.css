@@ -1,0 +1,105 @@
+:root{
+  --panel-bg:rgba(5,10,20,0.66);
+  --panel-border:rgba(255,255,255,0.06);
+  --accent:#66ccff;
+}
+
+html,body{
+  height:100%; margin:0; background:#000; color:#e6f2ff;
+  font-family:Inter,Arial,Helvetica,sans-serif;
+}
+
+#container{ position:relative; width:100%; height:100vh; overflow:hidden }
+canvas{ display:block }
+
+/* Painel de texto — agora SEM fundo e sem bloquear cliques */
+.panel-left{
+  position:absolute; left:18px; top:18px;
+  /* removidos: bottom, width fixa e fundo */
+  background:none; border:none; box-shadow:none; border-radius:0; padding:0;
+  pointer-events:none;          /* não bloqueia cliques no canvas */
+  max-width:520px;
+}
+.panel-left h2{ margin:0 0 8px 0; font-size:20px }
+.panel-left .small{ font-size:12px; color:#9fcff0 }
+
+/* Painel de controles (se usar) — mantém escopo dos botões */
+.panel-right{
+  position:absolute; right:18px; top:18px; width:260px; background:var(--panel-bg);
+  border:1px solid var(--panel-border); padding:12px; border-radius:12px; z-index:10;
+}
+.control{ margin-bottom:10px }
+label{ display:block; font-size:13px; color:#bfeaff; margin-bottom:6px }
+.panel-right input[type=range]{ width:100% }
+.panel-right button{
+  width:100%; padding:10px; border-radius:8px; border:none;
+  background:var(--accent); color:#012; font-weight:600; cursor:pointer;
+}
+
+/* Status (pode manter) */
+.status{
+  position:absolute; left:50%; transform:translateX(-50%); bottom:18px;
+  background:rgba(0,0,0,0.45); color:#bfeaff;
+  padding:8px 12px; border-radius:10px; border:1px solid var(--panel-border);
+}
+
+/* Classe .back genérica — NÃO define posição para não conflitar */
+.back{
+  z-index:12; padding:8px 12px; border-radius:8px;
+  border:1px solid var(--panel-border); background:var(--panel-bg);
+  color:#e6f2ff; cursor:pointer; backdrop-filter: blur(6px);
+  font-size:13px; line-height:1; box-shadow:0 4px 16px rgba(0,0,0,0.4);
+}
+.hidden{ display:none }
+
+/* Canvas deve receber cliques */
+#container canvas { pointer-events:auto }
+
+/* ===== Botão Voltar (id específico, SOBREPOR posição e largura) ===== */
+#backBtn {
+  position: absolute;
+  top: 20px;
+  left: 50%;               /* centraliza horizontalmente */
+  transform: translateX(-50%); /* corrige para o centro exato */
+  z-index: 10;
+
+  width: auto;
+  padding: 8px 16px;
+  font-size: 16px;
+  font-weight: bold;
+
+  color: #fff;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid #fff;
+  border-radius: 6px;
+
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+#backBtn:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+
+/* ===== Título e Texto (sem painel) ===== */
+#nodeTitle{
+  margin:0 0 6px 0; padding:0; color:#fff;
+  font-size:24px; font-weight:bold;
+  text-shadow:0 0 6px rgba(0,0,0,0.6);
+}
+#nodeText{
+  background:none; padding:0; color:#fff;
+  font-size:16px; line-height:1.4;
+  text-shadow:0 0 4px rgba(0,0,0,0.5);
+  max-width:520px;
+}
+
+/* Container opcional para posicionar título/texto juntos */
+#nodeInfo{
+  position:absolute;
+  bottom:20px;
+  left:20px;
+  z-index:10;
+  pointer-events:none; /* não bloquear cliques; texto é só informativo */
+}
