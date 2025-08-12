@@ -34,7 +34,27 @@ export function renderControls(schema, onChange){
       input.type = 'checkbox';
       input.checked = !!ctrl.value;
       input.addEventListener('change', ()=> onChange(ctrl.id, input.checked ? 1 : 0));
-    } else {
+    }  else if (ctrl.type === 'select'){
+      // >>> NOVO: suporte a dropdown
+      input = document.createElement('select');
+      const opts = Array.isArray(ctrl.options) ? ctrl.options : [];
+      const initial = (ctrl.value !== undefined) ? ctrl.value
+                     : (ctrl.initial !== undefined) ? ctrl.initial
+                     : (opts.length ? opts[0] : '');
+
+      opts.forEach(optVal=>{
+        const opt = document.createElement('option');
+        opt.value = String(optVal);
+        opt.textContent = String(optVal);
+        if (optVal === initial) opt.selected = true;
+        input.appendChild(opt);
+      });
+
+      input.addEventListener('change', ()=>{
+        onChange?.(ctrl.id, input.value);
+      });
+      
+      } else {
       // fallback text/number
       input = document.createElement('input');
       input.type = 'text';

@@ -150,3 +150,25 @@ label{ display:block; font-size:13px; color:#bfeaff; margin-bottom:6px }
 }
 .script-bar button:hover{ background:rgba(255,255,255,0.14) }
 #scriptStatus{ margin-left:auto; color:#9fcff0; }
+
+.caption{
+  position: absolute;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  max-width: min(920px, 86vw);
+  padding: 10px 14px;
+  border-radius: 10px;
+  border: 1px solid var(--panel-border);
+  background: rgba(0,0,0,0.45);
+  color: #e6f2ff;
+  font-size: 16px;
+  line-height: 1.35;
+  text-align: center;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.5);
+  backdrop-filter: blur(6px);
+  z-index: 12;
+}
+.caption.hidden{ display: none; }
+
+.script-bar button.off { opacity: 0.6; }
