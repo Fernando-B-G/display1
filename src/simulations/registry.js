@@ -1,8 +1,9 @@
 // src/simulations/registry.js
 import { initCenterSim, disposeNodeSimulation } from './core.js';
-import { buildSim_5a } from './sims/orbitals_5a.js';
+import { buildSim_5a } from './sims/schrodinger_5a.js';
 import { buildSim_7 } from './sims/photoelectric_7.js';
 import { buildSim_4 } from './sims/sterngerlach_4.js';
+import { buildSim_1 as buildPrism } from './sims/prism_1.js';
 import { buildSim_fallback } from './sims/fallback.js';
 
 // 🔸 NOVO: introdutório (prisma/sol/espectros)
@@ -11,7 +12,7 @@ import { buildSim_fallback } from './sims/fallback.js';
 import { buildSim_1 } from './sims/intro_1.js';
 
 const REGISTRY = {
-  '1' : buildSim_1,  // ⬅️ novo
+  '1' : buildPrism, // (ou o id/string que você usa para o nó 1),  // ⬅️ novo
   '5a': buildSim_5a,
   '7' : buildSim_7,
   '4' : buildSim_4

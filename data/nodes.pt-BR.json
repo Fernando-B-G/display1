@@ -1,40 +1,34 @@
 {
   "1": {
     "script": [
-      { "say": "Bem-vindos! Vamos começar pela luz: um feixe branco atravessando um prisma se espalha nas cores do arco-íris.", "dur": 4200 },
+      { "say": "Newton demonstrou que a luz branca do Sol se separa em um arco-íris de cores ao passar por um prisma. Vamos observar esse fenômeno no anteparo.", "dur": 5000 },
       { "camera": { "pos": [0.2, 0.45, 11.6], "lookAt": [0, 0.65, 0], "dur": 1000 } },
 
       { "set": { "source": "Sol (contínuo)" } },
-      { "set": { "showLabels": 1 } },
-      { "say": "Esta é uma fonte contínua, como o Sol: note o espectro completo e os marcadores UV e infravermelho.", "dur": 4800 },
+      { "say": "Repare no espectro quase contínuo, com apenas pequenas interrupções. Esse padrão se assemelha ao de um corpo negro.", "dur": 6500 },
+      { "say": "Ao tentar explicar essa radiação, a física clássica previa um aumento infinito de energia — o que ficou conhecido como catástrofe ultravioleta.", "dur": 6500 },
 
-      { "tween": { "key": "prismAngle", "to": -8,  "dur": 1200 } },
-      { "tween": { "key": "prismAngle", "to": -20, "dur": 1200 } },
-      { "say": "A rotação do prisma altera o leque de dispersão, mas as cores continuam cobrindo toda a faixa visível.", "dur": 4200 },
+      { "say": "Resolver essa contradição levou a uma das primeiras grandes descobertas da Mecânica Quântica.", "dur": 5000 },
 
-      { "tween": { "key": "spread", "to": 1.6, "dur": 1500 } },
-      { "tween": { "key": "intensity", "to": 1.3, "dur": 1200 } },
-      { "say": "Aumentando a abertura e a intensidade, as franjas ficam mais evidentes na parede.", "dur": 3800 },
+      { "say": "Agora vamos trocar a fonte de luz para comparar com diferentes lâmpadas.", "dur": 5000 },
 
-      { "set": { "source": "Sódio" } },
-      { "camera": { "pos": [0.0, 0.35, 11.4], "lookAt": [0.2, 0.7, 0], "dur": 900 } },
-      { "say": "Agora trocamos a fonte para um elemento específico: Sódio aquecido. Observe as linhas de emissão — não um contínuo.", "dur": 5200 },
+      { "set": { "source": "Lâmpada de Sódio" } },
+      { "say": "Na lâmpada de sódio, em vez de um arco-íris contínuo, vemos duas linhas amarelas muito intensas — um padrão totalmente diferente.", "dur": 6500 },
 
-      { "set": { "source": "Mercúrio" } },
-      { "say": "Mercúrio exibe outro conjunto de linhas características. Cada elemento deixa sua 'impressão digital' espectral.", "dur": 4800 },
+      { "set": { "source": "Lâmpada de Mercúrio" } },
+      { "say": "Já a lâmpada de mercúrio mostra linhas isoladas em violeta, azul, verde e amarelo-esverdeado, criando outra assinatura luminosa.", "dur": 6500 },
 
-      { "set": { "source": "Hidrogênio" } },
-      { "say": "Hidrogênio: repare nas linhas da série de Balmer, especialmente a vermelha e a azul-esverdeada.", "dur": 5200 },
+      { "say": "Cada elemento, quando estimulado, emite um conjunto único de linhas — como se fosse sua impressão digital.", "dur": 6000 },
+      { "say": "Esse fato indicava que havia um mecanismo interno, específico de cada átomo, para gerar essas linhas.", "dur": 5500 },
 
-      { "tween": { "key": "spread", "to": 1.0, "dur": 900 } },
-      { "tween": { "key": "prismAngle", "to": -16, "dur": 900 } },
-      { "tween": { "key": "intensity", "to": 1.0, "dur": 800 } },
-      { "say": "Comparando: fontes contínuas geram espectro contínuo; elementos discretos geram linhas. É daqui que surgem muitas pistas atômicas.", "dur": 5200 },
+      { "set": { "source": "Lâmpada de Hidrogênio" } },
+      { "say": "O hidrogênio, o elemento mais simples, exibe poucas linhas no visível, mas com espaçamentos regulares e bem definidos.", "dur": 6000 },
 
-      { "camera": { "pos": [0.35, 0.5, 11.8], "lookAt": [0, 0.7, 0], "dur": 1200 } },
-      { "say": "Prontos para seguir? Na escolha adiante, mãos abertas ou fechadas decidem o próximo caminho.", "dur": 3800 },
+      { "say": "O físico Johann Balmer descobriu que as posições dessas linhas seguiam uma relação matemática precisa, abrindo caminho para novas teorias sobre a estrutura do átomo.", "dur": 6500 },
 
-      { "wait": 1200 }
+      { "say": "Agora escolha: seguir explorando as linhas do hidrogênio com Balmer ou voltar à radiação de corpo negro com Planck.", "dur": 5500 },
+
+      { "wait": 800 }
     ]
   },
   "2": {
