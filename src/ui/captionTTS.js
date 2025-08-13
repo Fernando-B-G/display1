@@ -87,7 +87,13 @@ export function speak(text){
   // Em alguns browsers, falar logo após setar voice falha; usar cancel ajuda
   window.speechSynthesis.cancel();
   ttsUtter = u;
-  window.speechSynthesis.speak(u);
+  return new Promise(resolve=>{
+    u.onend = u.onerror = ()=>{
+      ttsUtter = null;
+      resolve();
+    };
+    window.speechSynthesis.speak(u);
+  });
 }
 
 export function pauseSpeak(){

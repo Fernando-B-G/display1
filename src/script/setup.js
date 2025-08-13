@@ -16,7 +16,7 @@ export function setupScriptForNode(nodeId, simRT, content){
     simGroup: simRT.group,
     simAPI: simRT.group?.userData?.api,
     simCamera: simRT.camera,
-    setText: (s)=>{ showCaption(refs.captionBar, s); speak(s); },
+    setText: (s)=>{ showCaption(refs.captionBar, s); return speak(s); },
     setStatus: (s)=>{ refs.scriptStatus.textContent = s || ''; },
     onEnd: ()=> startVoteOnce(nodeId)
   });

@@ -73,15 +73,18 @@ export class ScriptPlayer {
     if (!step) return;
 
     if (step.say){
-    let text = step.say;
-    if (typeof text !== 'string'){
+      let text = step.say;
+      if (typeof text !== 'string'){
         text = (text && (text.text || text.t)) ?? '';
+      }
+      const p = this.ctx.setText?.(text);
+      if (p && typeof p.then === 'function'){
+        await p;
+      } else {
+        await sleep(step.dur ?? 1800);
+      }
+      return;
     }
-    this.ctx.setText?.(text);
-    await sleep(step.dur ?? 1800);
-    return;
-    }
-
 
     if (step.wait){ // {wait:1000}
       await sleep(step.wait);
@@ -214,4 +217,3 @@ async function maybeAsync(fnOrVal){
     return !!fnOrVal;
   }catch(e){ return false; }
 }
-
