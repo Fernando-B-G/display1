@@ -9,8 +9,6 @@ import { loadContent } from './contentloader.js';
 import { initCaptionAndTTS, resumeSpeak, pauseSpeak, stopSpeak } from './ui/captionTTS.js';
 import { setGotoNode, preloadGesturesOnce } from './vote.js';
 import { gotoNode } from './nav.js';
-import { ensureVoicesReady, speakAsync, pause as ttsPause, resume as ttsResume, stop as ttsStop } from './ui/captionTTS.js';
-
 
 async function bootstrap(){
   // DOM refs

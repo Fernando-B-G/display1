@@ -1,7 +1,8 @@
 {
-  "1": {
+    "1": {
     "script": [
       { "say": "Newton demonstrou que a luz branca do Sol se separa em um arco-íris de cores ao passar por um prisma. Vamos observar esse fenômeno no anteparo.", "dur": 5000 },
+      { "wait": 1200 },
       { "camera": { "pos": [0.2, 0.45, 11.6], "lookAt": [0, 0.65, 0], "dur": 1000 } },
 
       { "set": { "source": "Sol (contínuo)" } },
