@@ -20,19 +20,30 @@
   <button id="backBtn" class="back hidden">Voltar</button>
 
   <!-- Painel de texto -->
-  <div class="panel-left" id="textPanel">
-    <h2 id="nodeTitle">Selecione um nó do mapa</h2>
-    <div id="nodeText">
-      <p>Este é o protótipe do mapa mental com dois caminhos principais. Clique nos nós coloridos para carregar o texto e a simulação central (placeholder).</p>
-      <ul>
-        <li><b>Azul</b>: Caminho A — 1→2→3→4→5a→5b→5c (9 sai de 3)</li>
-        <li><b>Laranja</b>: Caminho B — 1→6→7→8→5a→5b→5c (10 sai de 7)</li>
-        <li><b>Verde</b>: Nó 9</li>
-        <li><b>Roxo</b>: Nó 10</li>
-      </ul>
-      <p class="small">Dica: arraste para orbitar a câmera. Clique em um nó para focar o conteúdo.</p>
-    </div>
+<div class="panel-left" id="textPanel">
+  <h2 id="nodeTitle">Bem‑vindo ao Display 1</h2>
+  <div id="nodeText">
+    <p>
+      Este display é um <b>mapa mental 3D interativo</b> da história da mecânica quântica antiga.
+    </p>
+
+    <p><b>Como interagir:</b></p>
+    <ul>
+      <li>Clique em um quadro para começar, ele apresentará um momento importante da história e ao final dele você poderá escolher qual deve ser o próximo quadro:
+      <li>Durante as escolhas, a decisão é feita por <b>votação</b>:
+        <ul>
+          <li><b>Mãos abertas</b> → seleciona a opção da <b>esquerda</b>.</li>
+          <li><b>Mãos fechadas</b> → seleciona a opção da <b>direita</b>.</li>
+        </ul>
+        O sistema detecta a maioria e segue automaticamente.
+      </li>
+    </ul>
+
+    <p class="small">
+      Dica: quando a votação aparecer, as opções e a contagem regressiva surgem na tela. 
+    </p>
   </div>
+</div>
 
 <!-- Painel de controles (direita) -->
 <div class="panel-right" id="controlsPanel">
