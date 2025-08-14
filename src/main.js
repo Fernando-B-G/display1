@@ -2,13 +2,12 @@
 import { refs } from './core/state.js';
 import { initScene } from './core/scene.js';
 import { bindEvents } from './core/events.js';
-import { buildGraph, exitToGraph } from './nav.js';
+import { buildGraph, exitToGraph, gotoNode } from './nav.js';
 import { startLoop } from './render/loop.js';
 import { setupUIBindings } from './ui.js';
 import { loadContent } from './contentloader.js';
 import { initCaptionAndTTS, resumeSpeak, pauseSpeak, stopSpeak } from './ui/captionTTS.js';
-import { setGotoNode, preloadGesturesOnce } from './vote.js';
-import { gotoNode } from './nav.js';
+import { setNavFns, preloadGesturesOnce } from './vote.js';
 import { preloadAllSimulations, REGISTRY } from './simulations/index.js';
 
 function toggleLoadingOverlay(show){
@@ -53,10 +52,10 @@ async function bootstrap(){
 
   buildGraph();
 
-  // habilita voto → nav
-  setGotoNode((id)=> gotoNode(id));
+  // habilita voto → navegação (agora também retorno)
+  setNavFns(gotoNode, exitToGraph);
 
-  // pre-carrega gestos e simulações (uma vez)
+  // pré-carrega gestos e simulações
   await Promise.all([
     preloadGesturesOnce(),
     preloadAllSimulations(Object.keys(REGISTRY))

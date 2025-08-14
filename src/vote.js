@@ -3,9 +3,13 @@ import { refs } from './core/state.js';
 import { nodesData, edgesData } from './graph.js';
 import { startGesture, preloadGesture } from './gesture.js';
 
-let gotoNodeFn = null; // setado pelo nav
+let gotoNodeFn = null;     // fornecido pelo nav
+let exitGraphFn = null;    // novo: voltar ao mapa
 
-export function setGotoNode(fn){ gotoNodeFn = fn; }
+export function setNavFns(gotoFn, exitFn){
+  gotoNodeFn = gotoFn;
+  exitGraphFn = exitFn;
+}
 export function getVoteState(){ return refs.voteState; }
 
 export function preloadGesturesOnce(){
@@ -28,6 +32,7 @@ export function startVote(nodeId){
   const options = nextOptions(nodeId);
   if (options.length === 0){
     refs.statusEl.textContent = 'Fim do caminho.';
+    exitGraphFn && exitGraphFn();       // volta ao mapa
     return;
   }
   if (options.length === 1){

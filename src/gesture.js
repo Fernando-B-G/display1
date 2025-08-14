@@ -37,10 +37,11 @@ export async function preloadGesture() {
       onFrame: async () => { await handsInstance.send({ image: videoEl }); },
       width: 640, height: 480
     });
-    //await warmup.start();
+    await warmup.start();
+    
     // roda ~10 frames
-    //await new Promise(r => setTimeout(r, 400));
-    //await warmup.stop();
+    await new Promise(r => setTimeout(r, 400));
+    await warmup.stop();
 
     preloadDone = true;
   } catch (err) {
