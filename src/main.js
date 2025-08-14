@@ -47,7 +47,7 @@ async function bootstrap(){
   setGotoNode((id)=> gotoNode(id));
 
   // pre-carrega gestos (uma vez)
-  preloadGesturesOnce();
+  await preloadGesturesOnce();
 
   startLoop();
 }
