@@ -1,35 +1,24 @@
 {
-    "1": {
+  "1": {
+    "title": "Prisma de Newton e Fontes de Luz",
     "script": [
-      { "say": "Newton demonstrou que a luz branca do Sol se separa em um arco-íris de cores ao passar por um prisma. Vamos observar esse fenômeno no anteparo.", "dur": 5000 },
-      { "wait": 1200 },
-      { "camera": { "pos": [0.2, 0.45, 11.6], "lookAt": [0, 0.65, 0], "dur": 1000 } },
-
+      { "say": "Newton demonstrou que a luz branca do Sol se separa em um arco-íris de cores ao passar por um prisma. Vamos observar esse fenômeno no anteparo." },
+      { "camera": { "pos": [0.2, 0.45, 11.6], "lookAt": [0, 0.65, 0] } },
       { "set": { "source": "Sol (contínuo)" } },
-      { "say": "Repare no espectro quase contínuo, com apenas pequenas interrupções. Esse padrão se assemelha ao de um corpo negro.", "dur": 6500 },
-      { "say": "Ao tentar explicar essa radiação, a física clássica previa um aumento infinito de energia — o que ficou conhecido como catástrofe ultravioleta.", "dur": 6500 },
-
-      { "say": "Resolver essa contradição levou a uma das primeiras grandes descobertas da Mecânica Quântica.", "dur": 5000 },
-
-      { "say": "Agora vamos trocar a fonte de luz para comparar com diferentes lâmpadas.", "dur": 5000 },
-
+      { "say": "Repare no espectro quase contínuo, com apenas pequenas interrupções. Esse padrão se assemelha ao de um corpo negro." },
+      { "say": "Ao tentar explicar essa radiação, a física clássica previa um aumento infinito de energia — o que ficou conhecido como catástrofe ultravioleta." },
+      { "say": "Resolver essa contradição levou a uma das primeiras grandes descobertas da Mecânica Quântica." },
+      { "say": "Agora vamos trocar a fonte de luz para comparar com diferentes lâmpadas." },
       { "set": { "source": "Lâmpada de Sódio" } },
-      { "say": "Na lâmpada de sódio, em vez de um arco-íris contínuo, vemos duas linhas amarelas muito intensas — um padrão totalmente diferente.", "dur": 6500 },
-
+      { "say": "Na lâmpada de sódio, em vez de um arco-íris contínuo, vemos duas linhas amarelas muito intensas — um padrão totalmente diferente." },
       { "set": { "source": "Lâmpada de Mercúrio" } },
-      { "say": "Já a lâmpada de mercúrio mostra linhas isoladas em violeta, azul, verde e amarelo-esverdeado, criando outra assinatura luminosa.", "dur": 6500 },
-
-      { "say": "Cada elemento, quando estimulado, emite um conjunto único de linhas — como se fosse sua impressão digital.", "dur": 6000 },
-      { "say": "Esse fato indicava que havia um mecanismo interno, específico de cada átomo, para gerar essas linhas.", "dur": 5500 },
-
+      { "say": "Já a lâmpada de mercúrio mostra linhas isoladas em violeta, azul, verde e amarelo-esverdeado, criando outra assinatura luminosa." },
+      { "say": "Cada elemento, quando estimulado, emite um conjunto único de linhas — como se fosse sua impressão digital." },
+      { "say": "Esse fato indicava que havia um mecanismo interno, específico de cada átomo, para gerar essas linhas." },
       { "set": { "source": "Lâmpada de Hidrogênio" } },
-      { "say": "O hidrogênio, o elemento mais simples, exibe poucas linhas no visível, mas com espaçamentos regulares e bem definidos.", "dur": 6000 },
-
-      { "say": "O físico Johann Balmer descobriu que as posições dessas linhas seguiam uma relação matemática precisa, abrindo caminho para novas teorias sobre a estrutura do átomo.", "dur": 6500 },
-
-      { "say": "Agora escolha: seguir explorando as linhas do hidrogênio com Balmer ou voltar à radiação de corpo negro com Planck.", "dur": 5500 },
-
-      { "wait": 800 }
+      { "say": "O hidrogênio, o elemento mais simples, exibe poucas linhas no visível, mas com espaçamentos regulares e bem definidos." },
+      { "say": "O físico Johann Balmer descobriu que as posições dessas linhas seguiam uma relação matemática precisa, abrindo caminho para novas teorias sobre a estrutura do átomo." },
+      { "say": "Agora escolha: seguir explorando as linhas do hidrogênio com Balmer ou voltar à radiação de corpo negro com Planck." }
     ]
   },
   "2": {
@@ -63,6 +52,7 @@
       { "camera": { "pos": [0.1, 0.25, 11.8], "lookAt": [0, 0, 0], "dur": 900 } },
       { "say": "Partículas se separam em duas faixas: 'spin para cima' e 'para baixo'.", "dur": 4200 },
       { "set": { "fieldStrength": 0.8 } },
+      { "rotate": { "axis": [0, 1, 0], "deg": 90, "dur": 1200 } },
       { "tween": { "key": "fieldStrength", "to": 1.4, "dur": 1400 } },
       { "wait": 1600 },
       { "say": "Inverter o campo troca as deflexões.", "dur": 2800 },

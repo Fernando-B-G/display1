@@ -112,6 +112,14 @@ export class ScriptPlayer {
       return;
     }
 
+    if (step.rotate){ // {rotate:{axis:[x,y,z], angle:rad, deg:graus, dur:ms, ease:'easeInOut'}}
+      const { axis=[0,1,0], angle, deg, dur=800, ease='easeInOut' } = step.rotate;
+      const a = typeof angle === 'number' ? angle
+                : typeof deg === 'number' ? deg*Math.PI/180 : 0;
+      await this._tweenRotate(axis, a, dur, ease);
+      return;
+    }
+
     if (step.call){ // {call:'nome', args:{...}}
       // gancho simples: se você quiser hooks customizados por nó
       const fn = this.ctx[step.call];
@@ -183,6 +191,37 @@ export class ScriptPlayer {
         const tgt = t0.clone().lerp(t1, k);
         cam.lookAt(tgt);
         this.ctx._camTarget = tgt.clone();
+        if (!cancelled && u < 1 && !this.abort){
+          this._raf = requestAnimationFrame(loop);
+        } else {
+          resolve();
+        }
+      };
+      this._raf = requestAnimationFrame(loop);
+    });
+
+    this._tweeners.delete(tweener);
+  }
+
+  async _tweenRotate(axisArr, angle, dur, easeName){
+    const grp = this.ctx.simGroup;
+    if (!grp || !angle) return;
+    const ease = easings[easeName] || easings.easeInOut;
+
+    const axis = vec3(axisArr).normalize();
+    const q0 = grp.quaternion.clone();
+    const q1 = q0.clone().multiply(new THREE.Quaternion().setFromAxisAngle(axis, angle));
+
+    let tStart; let cancelled=false;
+    const tweener = { cancel: ()=>{ cancelled=true; } };
+    this._tweeners.add(tweener);
+
+    await new Promise(resolve=>{
+      const loop = (now)=>{
+        if (!tStart) tStart = now;
+        const u = Math.min(1, (now - tStart)/dur);
+        const k = ease(u);
+        grp.quaternion.copy(q0).slerp(q1, k);
         if (!cancelled && u < 1 && !this.abort){
           this._raf = requestAnimationFrame(loop);
         } else {

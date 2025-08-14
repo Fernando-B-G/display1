@@ -61,9 +61,10 @@ async function bootstrap(){
     preloadAllSimulations(Object.keys(REGISTRY))
   ]);
 
-  toggleLoadingOverlay(false);
-
+requestAnimationFrame(() => {
   startLoop();
+  requestIdleCallback(() => toggleLoadingOverlay(false));
+});
 }
 
 bootstrap();
