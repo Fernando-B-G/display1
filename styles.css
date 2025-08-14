@@ -208,3 +208,19 @@ label{ display:block; font-size:13px; color:#bfeaff; margin-bottom:6px }
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+
+button.fullscreen {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  padding: 6px 10px;
+  font-size: 1.2em;
+  background: rgba(0,0,0,0.5);
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+button.fullscreen:hover {
+  background: rgba(0,0,0,0.8);
+}

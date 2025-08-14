@@ -72,3 +72,17 @@ export function clearControls(){
   const panel = document.getElementById('controlsHost');
   if (panel) panel.innerHTML = '<div class="small">Selecione um nó.</div>';
 }
+
+const fsBtn = document.getElementById('fullscreenBtn');
+
+fsBtn.addEventListener('click', () => {
+  if (!document.fullscreenElement) {
+    // entra em fullscreen
+    document.documentElement.requestFullscreen().catch(err => {
+      console.error(`Erro ao entrar em fullscreen: ${err.message}`);
+    });
+  } else {
+    // sai do fullscreen
+    document.exitFullscreen();
+  }
+});

@@ -1,5 +1,5 @@
-import * as THREE from 'three';
 // src/script/player.js
+import * as THREE from 'three';
 // Pequeno “engine” de roteiro com passos sequenciais e tweens.
 
 export class ScriptPlayer {
@@ -15,7 +15,7 @@ export class ScriptPlayer {
     this._tweeners = new Set();
   }
 
-  load(steps){            // steps = array de comandos (ver exemplos)
+  load(steps){
     this.steps = Array.isArray(steps) ? steps : [];
     this.i = 0;
     this.playing = false;
@@ -34,17 +34,16 @@ export class ScriptPlayer {
       if (this.paused){ await sleep(120); continue; }
 
       const step = this.steps[this.i++];
-      try {
-        // cada step pode ser síncrono ou retornar Promise
+      try{
         const p = this._runStep(step);
         if (p && typeof p.then === 'function') await p;
-      } catch(e){ console.warn('[ScriptPlayer] erro no step', e); }
+      }catch(e){ console.warn('[ScriptPlayer] erro no step', e); }
     }
 
     this.playing = false;
     if (!this.abort){
       this.ctx.setStatus?.('concluído');
-      this.ctx.onEnd?.(); // dispara votação
+      this.ctx.onEnd?.();
     } else {
       this.ctx.setStatus?.('interrompido');
     }
@@ -57,12 +56,10 @@ export class ScriptPlayer {
   }
 
   stop(){
-    // finaliza tudo e reseta
     this.abort = true;
     this.paused = false;
     this.playing = false;
     this.i = 0;
-    // cancela tweens ativos
     this._tweeners.forEach(t => t.cancel && t.cancel());
     this._tweeners.clear();
     this.ctx.setStatus?.('pronto');
@@ -86,18 +83,15 @@ export class ScriptPlayer {
       return;
     }
 
-    if (step.wait){ // {wait:1000}
-      await sleep(step.wait);
-      return;
-    }
+    if (step.wait){ await sleep(step.wait); return; }
 
-    if (step.set){ // {set:{param: value, ...}}
+    if (step.set){
       const o = step.set;
       Object.keys(o).forEach(k => this.ctx.simAPI?.set?.(k, o[k]));
       return;
     }
 
-    if (step.tween){ // {tween:{key:'param', to:1.5, dur:1200, ease:'easeInOut'}}
+    if (step.tween){
       const { key, to, dur=800, ease='easeInOut' } = step.tween;
       const from = this.ctx.simAPI?.get?.(key);
       if (typeof from === 'number' && typeof to === 'number'){
@@ -106,13 +100,25 @@ export class ScriptPlayer {
       return;
     }
 
-    if (step.camera){ // {camera:{pos:[x,y,z], lookAt:[x,y,z], dur:800, ease:'linear'}}
+    if (step.camera){
       const { pos, lookAt, dur=800, ease='easeInOut' } = step.camera;
       await this._tweenCamera(pos, lookAt, dur, ease);
       return;
     }
 
-    if (step.rotate){ // {rotate:{axis:[x,y,z], angle:rad, deg:graus, dur:ms, ease:'easeInOut'}}
+    if (step.move){                  // << NOVO
+      const { to, by, dur=800, ease='easeInOut' } = step.move;
+      const grp = this.ctx.simGroup;
+      if (grp){
+        const target = Array.isArray(to)
+          ? vec3(to)
+          : grp.position.clone().add(Array.isArray(by) ? vec3(by) : new THREE.Vector3());
+        await this._tweenMove(target, dur, ease);
+      }
+      return;
+    }
+
+    if (step.rotate){
       const { axis=[0,1,0], angle, deg, dur=800, ease='easeInOut' } = step.rotate;
       const a = typeof angle === 'number' ? angle
                 : typeof deg === 'number' ? deg*Math.PI/180 : 0;
@@ -120,29 +126,24 @@ export class ScriptPlayer {
       return;
     }
 
-    if (step.call){ // {call:'nome', args:{...}}
-      // gancho simples: se você quiser hooks customizados por nó
+    if (step.call){
       const fn = this.ctx[step.call];
       if (typeof fn === 'function') await fn(step.args);
       return;
     }
 
-    if (step.parallel){ // {parallel:[{...},{...}], dur opcional}
-      // executa em paralelo; espera todas terminarem
+    if (step.parallel){
       const arr = Array.isArray(step.parallel) ? step.parallel : [];
       await Promise.all(arr.map(s => this._runStep(s)));
       return;
     }
 
-    if (step.until){ // {until:()=>boolean, checkEach:100}
+    if (step.until){
       const dt = step.checkEach ?? 120;
       while(!this.abort && !(await maybeAsync(step.until))) await sleep(dt);
       return;
     }
-
-    if (step.note){ // comentário
-      return;
-    }
+    // step.note -> ignorado
   }
 
   async _tweenValue(apply, from, to, dur, easeName){
@@ -152,15 +153,12 @@ export class ScriptPlayer {
     this._tweeners.add(tweener);
 
     await new Promise(resolve=>{
-      const loop = (now)=>{
+      const loop = now => {
         if (!t0) t0 = now;
         const u = Math.min(1, (now - t0)/dur);
-        apply( from + (to-from) * ease(u) );
-        if (!cancelled && u < 1 && !this.abort){
-          this._raf = requestAnimationFrame(loop);
-        } else {
-          resolve();
-        }
+        apply(from + (to-from)*ease(u));
+        if (!cancelled && u<1 && !this.abort) this._raf = requestAnimationFrame(loop);
+        else resolve();
       };
       this._raf = requestAnimationFrame(loop);
     });
@@ -183,7 +181,7 @@ export class ScriptPlayer {
     this._tweeners.add(tweener);
 
     await new Promise(resolve=>{
-      const loop = (now)=>{
+      const loop = now => {
         if (!tStart) tStart = now;
         const u = Math.min(1, (now - tStart)/dur);
         const k = ease(u);
@@ -191,11 +189,35 @@ export class ScriptPlayer {
         const tgt = t0.clone().lerp(t1, k);
         cam.lookAt(tgt);
         this.ctx._camTarget = tgt.clone();
-        if (!cancelled && u < 1 && !this.abort){
-          this._raf = requestAnimationFrame(loop);
-        } else {
-          resolve();
-        }
+        if (!cancelled && u<1 && !this.abort) this._raf = requestAnimationFrame(loop);
+        else resolve();
+      };
+      this._raf = requestAnimationFrame(loop);
+    });
+
+    this._tweeners.delete(tweener);
+  }
+
+  async _tweenMove(toVec, dur, easeName){      // << NOVO
+    const grp = this.ctx.simGroup;
+    if (!grp) return;
+    const ease = easings[easeName] || easings.easeInOut;
+
+    const p0 = grp.position.clone();
+    const p1 = toVec.clone();
+
+    let tStart; let cancelled=false;
+    const tweener = { cancel: ()=>{ cancelled=true; } };
+    this._tweeners.add(tweener);
+
+    await new Promise(resolve=>{
+      const loop = now => {
+        if (!tStart) tStart = now;
+        const u = Math.min(1, (now - tStart)/dur);
+        const k = ease(u);
+        grp.position.lerpVectors(p0, p1, k);
+        if (!cancelled && u<1 && !this.abort) this._raf = requestAnimationFrame(loop);
+        else resolve();
       };
       this._raf = requestAnimationFrame(loop);
     });
@@ -217,16 +239,13 @@ export class ScriptPlayer {
     this._tweeners.add(tweener);
 
     await new Promise(resolve=>{
-      const loop = (now)=>{
+      const loop = now => {
         if (!tStart) tStart = now;
         const u = Math.min(1, (now - tStart)/dur);
         const k = ease(u);
         grp.quaternion.copy(q0).slerp(q1, k);
-        if (!cancelled && u < 1 && !this.abort){
-          this._raf = requestAnimationFrame(loop);
-        } else {
-          resolve();
-        }
+        if (!cancelled && u<1 && !this.abort) this._raf = requestAnimationFrame(loop);
+        else resolve();
       };
       this._raf = requestAnimationFrame(loop);
     });
@@ -239,7 +258,6 @@ export class ScriptPlayer {
 function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
 function vec3(a){ return new THREE.Vector3(a[0], a[1], a[2]); }
 
-// Easing básicos
 const easings = {
   linear: t => t,
   easeInOut: t => 0.5*(1 - Math.cos(Math.PI*t)),

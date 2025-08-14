@@ -23,8 +23,10 @@
   },
   "2": {
     "script": [
+      { "move": { "by": [0, 5, 0], "dur": 800 } },
       { "say": "O hidrogênio exibiu linhas simples e regulares no espectro.", "dur": 4000 },
       { "wait": 1200 },
+      { "move": { "by": [0, -5, 0], "dur": 800 } },
       { "say": "Essas linhas sugeriam níveis de energia discretos.", "dur": 3500 },
       { "camera": { "pos": [-0.3, 0.2, 11.5], "lookAt": [0, 0, 0], "dur": 1200 } },
       { "say": "Balmer e Lyman encontraram relações matemáticas entre os comprimentos de onda.", "dur": 4500 },
