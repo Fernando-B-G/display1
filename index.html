@@ -15,75 +15,81 @@
   </script>
 </head>
 <body>
+  <!-- Overlay inicial de carregamento -->
+  <div id="loadingOverlay" class="loading">
+    <div class="loading-content">
+      <div class="spinner"></div>
+      <div class="loading-text">Carregando…</div>
+    </div>
+  </div>
+
   <div id="container"></div>
   <div id="captionBar" class="caption hidden"></div>
   <button id="backBtn" class="back hidden">Voltar</button>
 
   <!-- Painel de texto -->
-<div class="panel-left" id="textPanel">
-  <h2 id="nodeTitle">Bem‑vindo ao Display 1</h2>
-  <div id="nodeText">
-    <p>
-      Este display é um <b>mapa mental 3D interativo</b> da história da mecânica quântica antiga.
-    </p>
+  <div class="panel-left" id="textPanel">
+    <h2 id="nodeTitle">Bem‑vindo ao Display 1</h2>
+    <div id="nodeText">
+      <p>
+        Este display é um <b>mapa mental 3D interativo</b> da história da mecânica quântica antiga.
+      </p>
 
-    <p><b>Como interagir:</b></p>
-    <ul>
-      <li>Clique em um quadro para começar, ele apresentará um momento importante da história e ao final dele você poderá escolher qual deve ser o próximo quadro:
-      <li>Durante as escolhas, a decisão é feita por <b>votação</b>:
-        <ul>
-          <li><b>Mãos abertas</b> → seleciona a opção da <b>esquerda</b>.</li>
-          <li><b>Mãos fechadas</b> → seleciona a opção da <b>direita</b>.</li>
-        </ul>
-        O sistema detecta a maioria e segue automaticamente.
-      </li>
-    </ul>
+      <p><b>Como interagir:</b></p>
+      <ul>
+        <li>Clique em um quadro para começar, ele apresentará um momento importante da história e ao final dele você poderá escolher qual deve ser o próximo quadro:</li>
+        <li>Durante as escolhas, a decisão é feita por <b>votação</b>:
+          <ul>
+            <li><b>Mãos abertas</b> → seleciona a opção da <b>esquerda</b>.</li>
+            <li><b>Mãos fechadas</b> → seleciona a opção da <b>direita</b>.</li>
+          </ul>
+          O sistema detecta a maioria e segue automaticamente.
+        </li>
+      </ul>
 
-    <p class="small">
-      Dica: quando a votação aparecer, as opções e a contagem regressiva surgem na tela. 
-    </p>
-  </div>
-</div>
-
-<!-- Painel de controles (direita) -->
-<div class="panel-right" id="controlsPanel">
-  <div id="scriptBar" class="script-bar">
-    <button id="btnPlay">▶︎ Roteiro</button>
-    <button id="btnPause">⏸</button>
-    <button id="btnStop">⏹</button>
-    <button id="btnTTS">🔊 Voz</button>
-    <span id="scriptStatus" class="small"></span>
-  </div>
-
-  <!-- Os sliders/toggles dinâmicos vão aqui -->
-  <div id="controlsHost"></div>
-</div>
-
-
-<!-- Overlay de votação -->
-<div id="voteOverlay" class="vote hidden">
-  <div class="vote-box">
-    <div class="vote-title">Escolha o próximo passo</div>
-    <div class="vote-instructions">Abra as mãos para a opção da esquerda. Feche as mãos para a da direita.</div>
-
-    <div class="vote-options">
-      <div class="vote-col">
-        <div class="vote-label open-label">MÃOS ABERTAS → (opção)</div>
-        <div class="vote-count open-count">0</div>
-      </div>
-      <div class="vote-timer">
-        <div class="timer">10</div>
-        <div class="timer-caption">segundos</div>
-      </div>
-      <div class="vote-col">
-        <div class="vote-label closed-label">MÃOS FECHADAS → (opção)</div>
-        <div class="vote-count closed-count">0</div>
-      </div>
+      <p class="small">
+        Dica: quando a votação aparecer, as opções e a contagem regressiva surgem na tela.
+      </p>
     </div>
-    <div class="vote-note">Permita o acesso à câmera. Sem câmera, use O (abertas) ou C (fechadas) no teclado.</div>
   </div>
-</div>
 
+  <!-- Painel de controles (direita) -->
+  <div class="panel-right" id="controlsPanel">
+    <div id="scriptBar" class="script-bar">
+      <button id="btnPlay">▶︎ Roteiro</button>
+      <button id="btnPause">⏸</button>
+      <button id="btnStop">⏹</button>
+      <button id="btnTTS">🔊 Voz</button>
+      <span id="scriptStatus" class="small"></span>
+    </div>
+
+    <!-- Os sliders/toggles dinâmicos vão aqui -->
+    <div id="controlsHost"></div>
+  </div>
+
+  <!-- Overlay de votação -->
+  <div id="voteOverlay" class="vote hidden">
+    <div class="vote-box">
+      <div class="vote-title">Escolha o próximo passo</div>
+      <div class="vote-instructions">Abra as mãos para a opção da esquerda. Feche as mãos para a da direita.</div>
+
+      <div class="vote-options">
+        <div class="vote-col">
+          <div class="vote-label open-label">MÃOS ABERTAS → (opção)</div>
+          <div class="vote-count open-count">0</div>
+        </div>
+        <div class="vote-timer">
+          <div class="timer">10</div>
+          <div class="timer-caption">segundos</div>
+        </div>
+        <div class="vote-col">
+          <div class="vote-label closed-label">MÃOS FECHADAS → (opção)</div>
+          <div class="vote-count closed-count">0</div>
+        </div>
+      </div>
+      <div class="vote-note">Permita o acesso à câmera. Sem câmera, use O (abertas) ou C (fechadas) no teclado.</div>
+    </div>
+  </div>
 
   <div class="status" id="status">Pronto</div>
 

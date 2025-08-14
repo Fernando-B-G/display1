@@ -11,7 +11,7 @@ import { buildSim_fallback } from './sims/fallback.js';
 // export function buildSim_1(group){ ... group.userData.uiSchema = [...]; group.userData.api = {...}; ... }
 import { buildSim_1 } from './sims/intro_1.js';
 
-const REGISTRY = {
+export const REGISTRY = {
   '1' : buildPrism, // (ou o id/string que você usa para o nó 1),  // ⬅️ novo
   '5a': buildSim_5a,
   '7' : buildSim_7,

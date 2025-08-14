@@ -81,7 +81,6 @@ label{ display:block; font-size:13px; color:#bfeaff; margin-bottom:6px }
   background: rgba(0, 0, 0, 0.6);
 }
 
-
 /* ===== Título e Texto (sem painel) ===== */
 #nodeTitle{
   margin:0 0 6px 0; padding:0; color:#fff;
@@ -172,3 +171,40 @@ label{ display:block; font-size:13px; color:#bfeaff; margin-bottom:6px }
 .caption.hidden{ display: none; }
 
 .script-bar button.off { opacity: 0.6; }
+
+/* ===== Overlay de carregamento ===== */
+.loading {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0,0,0,0.6);
+  z-index: 1000;
+}
+.loading.hidden { display: none; }
+
+.loading-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.loading .spinner {
+  width: 64px;
+  height: 64px;
+  border: 6px solid rgba(255,255,255,0.25);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+.loading .loading-text {
+  margin-top: 12px;
+  font-size: 16px;
+  color: #e6f2ff;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

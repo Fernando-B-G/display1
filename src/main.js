@@ -9,6 +9,13 @@ import { loadContent } from './contentloader.js';
 import { initCaptionAndTTS, resumeSpeak, pauseSpeak, stopSpeak } from './ui/captionTTS.js';
 import { setGotoNode, preloadGesturesOnce } from './vote.js';
 import { gotoNode } from './nav.js';
+import { preloadAllSimulations, REGISTRY } from './simulations/index.js';
+
+function toggleLoadingOverlay(show){
+  const el = refs.loadingOverlay;
+  if(!el) return;
+  el.classList.toggle('hidden', !show);
+}
 
 async function bootstrap(){
   // DOM refs
@@ -22,6 +29,9 @@ async function bootstrap(){
   refs.btnStop     = document.getElementById('btnStop');
   refs.scriptStatus= document.getElementById('scriptStatus');
   refs.captionBar  = document.getElementById('captionBar');
+  refs.loadingOverlay = document.getElementById('loadingOverlay');
+
+  toggleLoadingOverlay(true);
 
   initScene();
   bindEvents();
@@ -46,8 +56,13 @@ async function bootstrap(){
   // habilita voto → nav
   setGotoNode((id)=> gotoNode(id));
 
-  // pre-carrega gestos (uma vez)
-  await preloadGesturesOnce();
+  // pre-carrega gestos e simulações (uma vez)
+  await Promise.all([
+    preloadGesturesOnce(),
+    preloadAllSimulations(Object.keys(REGISTRY))
+  ]);
+
+  toggleLoadingOverlay(false);
 
   startLoop();
 }

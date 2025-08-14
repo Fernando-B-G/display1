@@ -40,7 +40,11 @@ export async function enterNode(id, nodeGroup){
   focusNode(id, nodeGroup);
 
   setTimeout(async () => {
-    const simRT = await createRTSimulation(id);
+    let simRT = refs.simCache[id];
+    if (!simRT){
+      simRT = await createRTSimulation(id);
+      refs.simCache[id] = simRT;
+    }
     nodeGroup.userData.simRT = simRT;
 
     refs.backBtn.classList.remove('hidden');
@@ -75,7 +79,6 @@ export function gotoNode(targetId){
 
   getNodeGroups(refs.mindmapGroup).forEach(g=>{
     if (g.userData?.simRT){
-      try { g.userData.simRT.dispose && g.userData.simRT.dispose(); } catch(_){}
       delete g.userData.simRT;
       g.userData.isActive = false;
     }
@@ -86,7 +89,11 @@ export function gotoNode(targetId){
   focusNode(targetId, nodeGroup);
 
   setTimeout(async ()=>{
-    const simRT = await createRTSimulation(targetId);
+    let simRT = refs.simCache[targetId];
+    if (!simRT){
+      simRT = await createRTSimulation(targetId);
+      refs.simCache[targetId] = simRT;
+    }
     nodeGroup.userData.simRT = simRT;
 
     const content = getContent(targetId) || { title:targetId, text:'(sem conteúdo)' };
@@ -120,7 +127,6 @@ export function exitToGraph(){
 
   getNodeGroups(refs.mindmapGroup).forEach(g=>{
     if (g.userData?.simRT){
-      try { g.userData.simRT.dispose && g.userData.simRT.dispose(); } catch(_){}
       delete g.userData.simRT;
     }
     g.userData.isActive = false;

@@ -18,6 +18,7 @@ export const refs = {
   raycaster: new THREE.Raycaster(),
   mode: 'graph',             // 'graph' | 'node-zoom' | 'sim'
   currentNodeId: null,
+  simCache: {},
 
   // script + voto
   scriptPlayer: null,
