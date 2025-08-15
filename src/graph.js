@@ -6,9 +6,9 @@ import { createPreviewFor } from './nodePreviews.js';
 /* ===== Cores ===== */
 export const COL_A  = 0x4ea1ff;   // azul caminho A (topo)
 export const COL_B  = 0xffa14e;   // laranja caminho B (base)
-export const COL_9  = 0x54e89b;   // verde (extra depois do 3)
-export const COL_10 = 0xbc7aff;   // roxo (extra depois do 7)
-export const COL_C  = 0x9fb3c8;   // convergência / hub
+export const COL_9  = 0xff4e4e;   // vermelho (extra depois do 3)
+export const COL_10 = 0xff4e4e;   // vermelho (extra depois do 7)
+export const COL_C  = 0xbc7aff;   // roxo (convergência / hub)
 
 /* ===== Dados ===== */
 export const nodesData = [
@@ -138,6 +138,7 @@ function makeNodeGroup(id, label, colorHex){
   ctx.fillStyle = 'rgba(0,0,0,0.12)';
   roundRect(ctx, 5, 5, w-10, h-10, r, true, true);
   ctx.fillStyle = '#E6F2FF';
+  
   ctx.font = 'bold 44px Inter, Arial';
   ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
   ctx.fillText(label, w/2, h/2);
