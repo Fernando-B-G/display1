@@ -84,7 +84,7 @@ label{ display:block; font-size:13px; color:#bfeaff; margin-bottom:6px }
 /* ===== Botão para chamar votação ===== */
 #voteBtn {
   position: absolute;
-  top: 20px;
+  bottom: 200px;
   right: 20px;
   z-index: 10;
 
