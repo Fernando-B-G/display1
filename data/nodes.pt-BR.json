@@ -3,6 +3,7 @@
     "title": "Prisma de Newton e Fontes de Luz",
     "script": [
       { "say": "Newton demonstrou que a luz branca do Sol se separa em um arco-íris de cores ao passar por um prisma. Vamos observar esse fenômeno no anteparo." },
+      { "highlight": { "id": "prism", "dur": 1500 } },
       { "camera": { "pos": [0.2, 0.45, 11.6], "lookAt": [0, 0.65, 0] } },
       { "set": { "source": "Sol (contínuo)" } },
       { "say": "Repare no espectro quase contínuo, com apenas pequenas interrupções. Esse padrão se assemelha ao de um corpo negro." },

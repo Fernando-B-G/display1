@@ -100,6 +100,17 @@ export class ScriptPlayer {
       return;
     }
 
+    if (step.highlight){
+      const h = typeof step.highlight === 'string'
+        ? { id: step.highlight }
+        : step.highlight;
+      const dur = h.dur ?? step.dur;
+      const opts = h.options ? { ...h.options, dur } : { dur };
+      this.ctx.simAPI?.highlight?.(h.id, opts);
+      if (dur) await sleep(dur);
+      return;
+    }
+
     if (step.camera){
       const { pos, lookAt, dur=800, ease='easeInOut' } = step.camera;
       await this._tweenCamera(pos, lookAt, dur, ease);

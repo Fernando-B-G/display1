@@ -75,6 +75,7 @@ export function buildSim_1(group) {
   }));
   prism.position.set(-0.2, 0, 0);
   prism.rotation.y = -0.28; // ângulo fixo
+  prism.name = 'prism';
   root.add(prism);
 
   // ---------- Anteparo (tela) com CanvasTexture ----------
@@ -103,7 +104,8 @@ export function buildSim_1(group) {
   // ---------- Raios após o prisma ----------
   const postGroup = new THREE.Group();
   root.add(postGroup);
-
+  group.userData.objects.push(srcG, preBeam, prism, screen, frame, postGroup);
+  
   // criamos alguns "feixes" como finos planos coloridos que vão do prisma até a tela
   function createRay(color, offsetYFrac = 0) {
     const len = 2.1; // distância prisma → tela
@@ -265,7 +267,34 @@ export function buildSim_1(group) {
         applyVisibility();
       }
     },
-    get: (k) => params[k]
+    get: (k) => params[k],
+    highlight: (id, opts={}) => {
+      const obj = root.getObjectByName(id);
+      if (!obj) return;
+      const mat = obj.material;
+      if (!mat || !mat.emissive) return;
+      const { color=0xffff00, dur=1200 } = opts;
+
+      if (obj.userData._highlightTimeout) {
+        clearTimeout(obj.userData._highlightTimeout);
+      }
+
+      if (obj.userData._origEmissive === undefined) {
+        obj.userData._origEmissive = mat.emissive.getHex();
+        obj.userData._origIntensity = mat.emissiveIntensity ?? 1;
+      }
+
+      mat.emissive.setHex(color);
+      mat.emissiveIntensity = 1.0;
+      mat.needsUpdate = true;
+
+      obj.userData._highlightTimeout = setTimeout(() => {
+        mat.emissive.setHex(obj.userData._origEmissive);
+        mat.emissiveIntensity = obj.userData._origIntensity ?? 1;
+        mat.needsUpdate = true;
+        obj.userData._highlightTimeout = null;
+      }, dur);
+    }
   };
 
   // ---------- Animação sutil (pulsação do brilho) ----------

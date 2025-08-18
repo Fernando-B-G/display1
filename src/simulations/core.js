@@ -56,7 +56,8 @@ export function attachUI(group, params, schema){
     get: (k)=> params[k],
     reset: ()=> schema.forEach(ctrl=>{
       if ('value' in ctrl && ctrl.id in params) params[ctrl.id]=ctrl.value;
-    })
+    }),
+    highlight: (id, opts)=>{}
   };
   group.userData.uiSchema = schema;
 }
