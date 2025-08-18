@@ -1,5 +1,6 @@
 // src/simulations/sims/prism_1.js
 import * as THREE from 'three';
+import { attachHighlighter } from '../highlight.js';
 
 export function buildSim_1(group) {
   // ---------- Parâmetros (alinhado ao seu roteiro) ----------
@@ -105,7 +106,7 @@ export function buildSim_1(group) {
   const postGroup = new THREE.Group();
   root.add(postGroup);
   group.userData.objects.push(srcG, preBeam, prism, screen, frame, postGroup);
-  
+
   // criamos alguns "feixes" como finos planos coloridos que vão do prisma até a tela
   function createRay(color, offsetYFrac = 0) {
     const len = 2.1; // distância prisma → tela
@@ -256,6 +257,9 @@ export function buildSim_1(group) {
   applyVisibility();
 
   // ---------- API ----------
+
+  const highlight = attachHighlighter(group, root);
+
   group.userData.api = {
     set: (k, v) => {
       if (k === 'source') {
@@ -268,33 +272,7 @@ export function buildSim_1(group) {
       }
     },
     get: (k) => params[k],
-    highlight: (id, opts={}) => {
-      const obj = root.getObjectByName(id);
-      if (!obj) return;
-      const mat = obj.material;
-      if (!mat || !mat.emissive) return;
-      const { color=0xffff00, dur=1200 } = opts;
-
-      if (obj.userData._highlightTimeout) {
-        clearTimeout(obj.userData._highlightTimeout);
-      }
-
-      if (obj.userData._origEmissive === undefined) {
-        obj.userData._origEmissive = mat.emissive.getHex();
-        obj.userData._origIntensity = mat.emissiveIntensity ?? 1;
-      }
-
-      mat.emissive.setHex(color);
-      mat.emissiveIntensity = 1.0;
-      mat.needsUpdate = true;
-
-      obj.userData._highlightTimeout = setTimeout(() => {
-        mat.emissive.setHex(obj.userData._origEmissive);
-        mat.emissiveIntensity = obj.userData._origIntensity ?? 1;
-        mat.needsUpdate = true;
-        obj.userData._highlightTimeout = null;
-      }, dur);
-    }
+    highlight
   };
 
   // ---------- Animação sutil (pulsação do brilho) ----------
