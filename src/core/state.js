@@ -30,6 +30,7 @@ export const refs = {
   nodeText: null,
   statusEl: null,
   backBtn: null,
+  voteBtn: null,
   scriptStatus: null,
   btnPlay: null,
   btnPause: null,

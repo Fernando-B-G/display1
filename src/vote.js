@@ -29,6 +29,8 @@ export function startVote(nodeId){
 
   endVote();
 
+  refs.voteBtn?.classList.add('hidden');
+  
   const options = nextOptions(nodeId);
   if (options.length === 0){
     refs.statusEl.textContent = 'Fim do caminho.';

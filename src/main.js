@@ -7,7 +7,7 @@ import { startLoop } from './render/loop.js';
 import { setupUIBindings } from './ui.js';
 import { loadContent } from './contentloader.js';
 import { initCaptionAndTTS, resumeSpeak, pauseSpeak, stopSpeak } from './ui/captionTTS.js';
-import { setNavFns, preloadGesturesOnce } from './vote.js';
+import { setNavFns, preloadGesturesOnce, startVoteOnce } from './vote.js';
 import { preloadAllSimulations, REGISTRY } from './simulations/index.js';
 
 function toggleLoadingOverlay(show){
@@ -23,6 +23,7 @@ async function bootstrap(){
   refs.nodeText    = document.getElementById('nodeText');
   refs.statusEl    = document.getElementById('status');
   refs.backBtn     = document.getElementById('backBtn');
+  refs.voteBtn     = document.getElementById('voteBtn');
   refs.btnPlay     = document.getElementById('btnPlay');
   refs.btnPause    = document.getElementById('btnPause');
   refs.btnStop     = document.getElementById('btnStop');
@@ -37,6 +38,9 @@ async function bootstrap(){
 
   refs.backBtn.addEventListener('click', exitToGraph);
   refs.btnPlay?.addEventListener('click', ()=>{ refs.scriptPlayer?.play?.(); resumeSpeak(); });
+  refs.voteBtn.addEventListener('click', () => {
+    if (refs.currentNodeId) startVoteOnce(refs.currentNodeId);
+  });
   refs.btnPause?.addEventListener('click', ()=>{ refs.scriptPlayer?.pause?.(); pauseSpeak(); });
   refs.btnStop?.addEventListener('click', ()=>{ refs.scriptPlayer?.stop?.(); stopSpeak(); });
 

@@ -81,6 +81,32 @@ label{ display:block; font-size:13px; color:#bfeaff; margin-bottom:6px }
   background: rgba(0, 0, 0, 0.6);
 }
 
+/* ===== Botão para chamar votação ===== */
+#voteBtn {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  z-index: 10;
+
+  width: auto;
+  padding: 8px 16px;
+  font-size: 16px;
+  font-weight: bold;
+
+  color: #fff;
+  background: rgba(0, 0, 0, 0.4);
+  border: 2px solid #fff;
+  border-radius: 6px;
+
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+#voteBtn:hover {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+
 /* ===== Título e Texto (sem painel) ===== */
 #nodeTitle{
   margin:0 0 6px 0; padding:0; color:#fff;

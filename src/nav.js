@@ -47,8 +47,6 @@ export async function enterNode(id, nodeGroup){
     }
     nodeGroup.userData.simRT = simRT;
 
-    refs.backBtn.classList.remove('hidden');
-
     const content = getContent(id) || { title:id, text:'(sem conteúdo)' };
     refs.nodeTitle.textContent = content.title;
     refs.nodeText.innerHTML = `<p>${content.text || '(sem conteúdo)'}</p>`;
@@ -63,6 +61,7 @@ export async function enterNode(id, nodeGroup){
     refs.mode = 'sim';
 
     setupScriptForNode(id, simRT, content);
+    refs.voteBtn?.classList.remove('hidden');
   }, 300);
 }
 
@@ -109,6 +108,7 @@ export function gotoNode(targetId){
     refs.statusEl.textContent = content?.title ? `Simulação — ${content.title}` : '';
 
     setupScriptForNode(targetId, simRT, content);
+    refs.voteBtn?.classList.remove('hidden');
   }, 250);
 }
 
@@ -141,7 +141,7 @@ export function exitToGraph(){
   gsapLike(refs.camera.position, refs.camera.position.clone(), camTo, 0.9);
   gsapLike(refs.controls.target,  refs.controls.target.clone(),  tgtTo, 0.9);
 
-  refs.backBtn.classList.add('hidden');
+  refs.voteBtn?.classList.add('hidden');
   refs.statusEl.textContent = 'Mapa: selecione um nó';
   refs.currentNodeId = null;
 }
