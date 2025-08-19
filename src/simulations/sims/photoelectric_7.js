@@ -57,15 +57,16 @@ export function buildSim_7(group){
     new THREE.ConeGeometry(0.22, 0.36, 24),
     new THREE.MeshPhongMaterial({ color:0x666666, shininess:60 })
   );
-  head.rotation.z = -Math.PI/2;
-  head.position.set(-tubeLen/2 - 0.2, 0.45, 0);
+  head.rotation.x = -Math.PI/2;
+  head.position.set(0.3, 0, 0);
   const body = new THREE.Mesh(
     new THREE.CylinderGeometry(0.10, 0.10, 0.4, 16),
     new THREE.MeshPhongMaterial({ color:0x333333 })
   );
-  body.rotation.z = -Math.PI/2;
-  body.position.set(-tubeLen/2 - 0.5, 0.45, 0);
+  body.rotation.x = -Math.PI/2;
+  body.position.set(-0.1, 0, 0);
   lamp.add(head, body);
+  lamp.lookAt(leftEl.position);
   root.add(lamp);
 
   // ======= Feixe (plano) do bocal da lanterna ao eletrodo =======
@@ -73,9 +74,10 @@ export function buildSim_7(group){
   const beamGeom = new THREE.PlaneGeometry(beamLen, 0.28);
   const beamMat  = new THREE.MeshBasicMaterial({ color:0xffffff, transparent:true, opacity:0.0, side:THREE.DoubleSide });
   const beam = new THREE.Mesh(beamGeom, beamMat);
-  // posiciona rente ao bocal
-  beam.position.set(-tubeLen/2 - 0.42 + beamLen/2, 0.45, 0);
-  beam.rotation.y = Math.PI/2; // along x
+  beam.position.copy(lamp.position);
+  beam.lookAt(leftEl.position);
+  beam.translateZ(-beamLen/2);
+
   root.add(beam);
 
   // ======= Fio externo (simples curva) =======

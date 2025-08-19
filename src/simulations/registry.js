@@ -5,6 +5,9 @@ import { buildSim_7 } from './sims/photoelectric_7.js';
 import { buildSim_4 } from './sims/sterngerlach_4.js';
 import { buildSim_1 as buildPrism } from './sims/prism_1.js';
 import { buildSim_fallback } from './sims/fallback.js';
+import { buildSim_cube } from './sims/cube_demo.js';
+
+
 
 // 🔸 NOVO: introdutório (prisma/sol/espectros)
 // Crie este arquivo no mesmo padrão dos demais builders:
@@ -15,7 +18,7 @@ export const REGISTRY = {
   '1' : buildPrism, // (ou o id/string que você usa para o nó 1),  // ⬅️ novo
   '5a': buildSim_5a,
   '7' : buildSim_7,
-  '4' : buildSim_4
+  '4' : buildSim_cube
   // adicione aqui outros nós quando modularizar mais
 };
 
