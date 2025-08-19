@@ -256,24 +256,6 @@ export function buildSim_1(group) {
   }
   applyVisibility();
 
-  // ---------- API ----------
-
-  const highlight = attachHighlighter(group, root);
-
-  group.userData.api = {
-    set: (k, v) => {
-      if (k === 'source') {
-        params.source = String(v);
-        updateScreenForSource();
-        updatePostRaysForSource();
-      } else if (k in params) {
-        params[k] = (typeof params[k] === 'boolean') ? !!v : v;
-        applyVisibility();
-      }
-    },
-    get: (k) => params[k],
-    highlight
-  };
 
   // ---------- Animação sutil (pulsação do brilho) ----------
   let t = 0;
@@ -288,6 +270,23 @@ export function buildSim_1(group) {
     Object.values(rays).flat().forEach(r=>{
       r.material.opacity = 0.65 + 0.10*Math.sin(t*3.0);
     });
+  };
+
+  // ---------- API ----------
+  const highlight = attachHighlighter(group, root);
+  group.userData.api = {
+    set: (k, v) => {
+      if (k === 'source') {
+        params.source = String(v);
+        updateScreenForSource();
+        updatePostRaysForSource();
+      } else if (k in params) {
+        params[k] = (typeof params[k] === 'boolean') ? !!v : v;
+        applyVisibility();
+      }
+    },
+    get: (k) => params[k],
+    highlight
   };
 
   group.userData.dispose = () => {

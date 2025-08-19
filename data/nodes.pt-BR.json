@@ -121,20 +121,31 @@
     ]
   },
   "7": {
-    "script": [
-      { "say": "No efeito fotoelétrico, elétrons são ejetados acima de uma frequência-limiar.", "dur": 4600 },
-      { "camera": { "pos": [0, 0.3, 11.6], "lookAt": [-1, -0.5, 0], "dur": 1000 } },
-      { "set": { "frequency": 0.8 } },
-      { "say": "Abaixo do limiar, aumentar a intensidade não basta.", "dur": 3800 },
-      { "tween": { "key": "frequency", "to": 1.15, "dur": 1500 } },
-      { "say": "Acima do limiar, elétrons aparecem — e sua energia cinética cresce com a frequência.", "dur": 5200 },
-      { "tween": { "key": "photonRate", "to": 0.6, "dur": 1400 } },
-      { "wait": 1600 },
-      { "tween": { "key": "electronGain", "to": 1.4, "dur": 1200 } },
-      { "say": "Einstein interpretou isso com fótons de energia quantizada.", "dur": 4200 },
-      { "wait": 2200 }
-    ]
-  },
+  "title": "Efeito Fotoelétrico",
+  "script": [
+    { "say": "O efeito fotoelétrico mostra que a luz pode arrancar elétrons de uma superfície metálica." },
+    { "say": "Einstein estudou este fenômeno para provar que  a luz também se comporta como partículas, o que lhe rendeu o Prêmio Nobel de Física de 1921." },
+
+    { "say": "O que ele descobriu sobre a incidência de luz sobre um metal foi o seguinte:" },
+
+    { "set": { "frequency": 0.6 } },
+    { "say": "Com uma frequência baixa, por mais intensa que seja a luz, nenhum elétron é emitido." },
+
+    { "tween": { "key": "frequency", "to": 0.9 } },
+    { "say": "Ao aumentar a frequência, elétrons começam a aparecer." },
+
+    { "tween": { "key": "frequency", "to": 1.2 } },
+    { "say": "Acima de um limiar, elétrons são ejetados e são ejetados com uma energia cada vez maior conforme a frequência da luz aumenta." },
+
+    { "tween": { "key": "photonRate", "to": 0.8 } },
+    { "say": "Aumentar a intensidade aumenta o número de elétrons emitidos (a corrente elétrica), mas não a energia cinética máxima." },
+
+    { "tween": { "key": "electronGain", "to": 1.4 } },
+    { "say": "Einstein explicou esse comportamento propondo que a luz é formada por fótons, cada um com energia proporcional à sua frequência." },
+
+    { "say": "Agora escolha: seguir com a dualidade onda-partícula com a experiência da dupla fenda (nó 8) ou avançar para os estudos de radioatividade com Marie Curie (nó 10)." }
+  ]
+},
   "8": {
     "script": [
       { "say": "Interferência em dupla fenda: padrão de franjas revela a natureza ondulatória.", "dur": 4800 },
