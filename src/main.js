@@ -21,9 +21,11 @@ async function bootstrap(){
   refs.container   = document.getElementById('container');
   refs.nodeTitle   = document.getElementById('nodeTitle');
   refs.nodeText    = document.getElementById('nodeText');
+  refs.initialTitle = refs.nodeTitle.textContent;
+  refs.initialText  = refs.nodeText.innerHTML;
   refs.statusEl    = document.getElementById('status');
   refs.backBtn     = document.getElementById('backBtn');
-    refs.voteBtn     = document.getElementById('voteBtn');
+  refs.voteBtn     = document.getElementById('voteBtn');
   refs.btnPlayPause= document.getElementById('btnPlayPause');
   refs.btnStop     = document.getElementById('btnStop');
   refs.captionBar  = document.getElementById('captionBar');
@@ -62,7 +64,7 @@ async function bootstrap(){
     stopSpeak();
     refs.updatePlayPauseState?.('stopped');
   });
-  
+
   setupUIBindings();
   initCaptionAndTTS({ captionEl: refs.captionBar, ttsButton: document.getElementById('btnTTS') });
 

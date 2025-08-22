@@ -114,11 +114,26 @@ label{ display:block; font-size:13px; color:#bfeaff; margin-bottom:6px }
   font-size:24px; font-weight:bold;
   text-shadow:0 0 6px rgba(0,0,0,0.6);
 }
+.sim-mode #nodeTitle{
+  right:20px;
+  white-space:nowrap;
+}
 #nodeText{
   background:none; padding:0; color:#fff;
   font-size:16px; line-height:1.4;
   text-shadow:0 0 4px rgba(0,0,0,0.5);
   max-width:520px;
+}
+
+.sim-mode #nodeTitle{
+  position:absolute;
+  top:0;
+  left:60px;
+}
+.sim-mode #textPanel{
+  top:20px;
+  left:20px;
+  padding-top:60px;
 }
 
 /* Container opcional para posicionar título/texto juntos */

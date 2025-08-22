@@ -28,6 +28,8 @@ export const refs = {
   container: null,
   nodeTitle: null,
   nodeText: null,
+  initialTitle: '',
+  initialText: '',
   statusEl: null,
   backBtn: null,
   voteBtn: null,
