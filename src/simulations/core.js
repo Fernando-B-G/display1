@@ -8,6 +8,8 @@ export function initCenterSim(group){
     new THREE.PlaneGeometry(24, 14),
     new THREE.MeshBasicMaterial({ color:0x001825 })
   );
+  plate.material.depthWrite = false;
+  plate.raycast = () => false;
   plate.position.set(0, 0, 0);
   group.add(plate);
   group.userData = { currentId: null, objects: [], anim: null, ring: null };

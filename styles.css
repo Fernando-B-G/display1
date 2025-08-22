@@ -7,6 +7,7 @@
 html,body{
   height:100%; margin:0; background:#000; color:#e6f2ff;
   font-family:Inter,Arial,Helvetica,sans-serif;
+  overflow:hidden;
 }
 
 #container{ position:relative; width:100%; height:100vh; overflow:hidden }
@@ -174,7 +175,11 @@ label{ display:block; font-size:13px; color:#bfeaff; margin-bottom:6px }
   background:rgba(255,255,255,0.08); color:#e6f2ff; cursor:pointer;
 }
 .script-bar button:hover{ background:rgba(255,255,255,0.14) }
-#scriptStatus{ margin-left:auto; color:#9fcff0; }
+#btnPlayPause::after{ content:' Roteiro'; }
+#btnPlayPause.playing::before{ content:'⏸'; }
+#btnPlayPause.paused::before,
+#btnPlayPause.stopped::before{ content:'▶︎'; }
+#btnPlayPause.playing{ background:rgba(255,255,255,0.14); }
 
 .caption{
   position: absolute;

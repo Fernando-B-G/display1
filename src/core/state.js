@@ -31,11 +31,11 @@ export const refs = {
   statusEl: null,
   backBtn: null,
   voteBtn: null,
-  scriptStatus: null,
-  btnPlay: null,
-  btnPause: null,
+  btnPlayPause: null,
   btnStop: null,
   captionBar: null,
+
+  updatePlayPauseState: null,
 
   // constantes
   NODE_ZOOM_DISTANCE: 10,

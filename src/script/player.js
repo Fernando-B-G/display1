@@ -4,7 +4,7 @@ import * as THREE from 'three';
 
 export class ScriptPlayer {
   constructor(ctx){
-    // ctx: { nodeId, simGroup, simAPI, simCamera, setText, setStatus, onEnd }
+    // ctx: { nodeId, simGroup, simAPI, simCamera, setText, updatePlayPauseState, onEnd }
     this.ctx = ctx;
     this.steps = [];
     this.i = 0;
@@ -27,7 +27,7 @@ export class ScriptPlayer {
     if (this.playing) return;
     this.playing = true;
     this.paused = false; this.abort = false;
-    this.ctx.setStatus?.('tocando...');
+    this.ctx.updatePlayPauseState?.('playing');
 
     while (this.i < this.steps.length){
       if (this.abort) break;
@@ -42,17 +42,17 @@ export class ScriptPlayer {
 
     this.playing = false;
     if (!this.abort){
-      this.ctx.setStatus?.('concluído');
+      this.ctx.updatePlayPauseState?.('stopped');
       this.ctx.onEnd?.();
     } else {
-      this.ctx.setStatus?.('interrompido');
+      this.ctx.updatePlayPauseState?.('stopped');
     }
   }
 
   pause(){
     if (!this.playing) return;
     this.paused = !this.paused;
-    this.ctx.setStatus?.(this.paused ? 'pausado' : 'tocando...');
+    this.ctx.updatePlayPauseState?.(this.paused ? 'paused' : 'playing');
   }
 
   stop(){
@@ -62,7 +62,7 @@ export class ScriptPlayer {
     this.i = 0;
     this._tweeners.forEach(t => t.cancel && t.cancel());
     this._tweeners.clear();
-    this.ctx.setStatus?.('pronto');
+    this.ctx.updatePlayPauseState?.('stopped');
   }
 
   // ===== executores de passos =====

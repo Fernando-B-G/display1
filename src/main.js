@@ -23,13 +23,20 @@ async function bootstrap(){
   refs.nodeText    = document.getElementById('nodeText');
   refs.statusEl    = document.getElementById('status');
   refs.backBtn     = document.getElementById('backBtn');
-  refs.voteBtn     = document.getElementById('voteBtn');
-  refs.btnPlay     = document.getElementById('btnPlay');
-  refs.btnPause    = document.getElementById('btnPause');
+    refs.voteBtn     = document.getElementById('voteBtn');
+  refs.btnPlayPause= document.getElementById('btnPlayPause');
   refs.btnStop     = document.getElementById('btnStop');
-  refs.scriptStatus= document.getElementById('scriptStatus');
   refs.captionBar  = document.getElementById('captionBar');
   refs.loadingOverlay = document.getElementById('loadingOverlay');
+
+  function updatePlayPauseState(state){
+    const btn = refs.btnPlayPause;
+    if (!btn) return;
+    btn.classList.remove('playing','paused','stopped');
+    btn.classList.add(state);
+  }
+  refs.updatePlayPauseState = updatePlayPauseState;
+  updatePlayPauseState('stopped');
 
   toggleLoadingOverlay(true);
 
@@ -37,13 +44,25 @@ async function bootstrap(){
   bindEvents();
 
   refs.backBtn.addEventListener('click', exitToGraph);
-  refs.btnPlay?.addEventListener('click', ()=>{ refs.scriptPlayer?.play?.(); resumeSpeak(); });
+  refs.btnPlayPause?.addEventListener('click', ()=>{
+    if (!refs.scriptPlayer) return;
+    if (refs.scriptPlayer.playing){
+      refs.scriptPlayer.pause();
+      if (refs.scriptPlayer.paused) pauseSpeak(); else resumeSpeak();
+    } else {
+      refs.scriptPlayer.play();
+      resumeSpeak();
+    }
+  });
   refs.voteBtn.addEventListener('click', () => {
     if (refs.currentNodeId) startVoteOnce(refs.currentNodeId);
   });
-  refs.btnPause?.addEventListener('click', ()=>{ refs.scriptPlayer?.pause?.(); pauseSpeak(); });
-  refs.btnStop?.addEventListener('click', ()=>{ refs.scriptPlayer?.stop?.(); stopSpeak(); });
-
+  refs.btnStop?.addEventListener('click', ()=>{
+    refs.scriptPlayer?.stop?.();
+    stopSpeak();
+    refs.updatePlayPauseState?.('stopped');
+  });
+  
   setupUIBindings();
   initCaptionAndTTS({ captionEl: refs.captionBar, ttsButton: document.getElementById('btnTTS') });
 

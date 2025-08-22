@@ -23,11 +23,17 @@ function refreshVoices(){
 }
 function selectBRVoice(){
   if (!cachedVoices.length) return (brVoice = null);
-  // 1) lang pt-BR explícito
-  brVoice = cachedVoices.find(v => /pt[-_]BR/i.test(v.lang))
-         // 2) qualquer pt-*
+  // Prefer voices marcadas como "natural" ou "neural" antes das outras
+  const isNatural = v => /(natural|neural)/i.test(v.name);
+  // 1) lang pt-BR explícito + natural/neural
+  brVoice = cachedVoices.find(v => /pt[-_]BR/i.test(v.lang) && isNatural(v))
+         // 2) lang pt-BR sem natural
+         || cachedVoices.find(v => /pt[-_]BR/i.test(v.lang))
+         // 3) qualquer pt-* + natural/neural
+         || cachedVoices.find(v => /^pt/i.test(v.lang) && isNatural(v))
+         // 4) qualquer pt-*
          || cachedVoices.find(v => /^pt/i.test(v.lang))
-         // 3) nomes comuns
+         // 5) nomes comuns
          || cachedVoices.find(v => /portugu[eê]s.*brasil/i.test(v.name));
 }
 

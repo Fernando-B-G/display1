@@ -122,7 +122,7 @@ export function exitToGraph(){
 
   try { refs.scriptPlayer?.stop?.(); } catch(_) {}
   refs.scriptPlayer = null;
-  refs.scriptStatus.textContent = '';
+  refs.updatePlayPauseState?.('stopped');
   clearControls?.();
 
   getNodeGroups(refs.mindmapGroup).forEach(g=>{
