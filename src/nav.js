@@ -13,7 +13,7 @@ import { setupScriptForNode } from './script/setup.js';
 export function buildGraph(){ buildMindmap(refs.mindmapGroup); }
 
 export function focusNode(id, nodeGroup){
-  const content = getContent(id) || { title:id, text:'(sem conteúdo)' };
+  const content = getContent(id) || { title:id, text:'' };
   refs.nodeTitle.textContent = content.title;
   refs.nodeText.innerHTML = `
     <p>${content.text}</p>
@@ -35,6 +35,7 @@ export async function enterNode(id, nodeGroup){
   if (refs.mode !== 'graph') return;
   refs.mode = 'node-zoom';
   refs.currentNodeId = id;
+  refs.backBtn?.classList.remove('hidden');
 
   nodeGroup.userData.isActive = true;
   focusNode(id, nodeGroup);
@@ -47,9 +48,9 @@ export async function enterNode(id, nodeGroup){
     }
     nodeGroup.userData.simRT = simRT;
 
-    const content = getContent(id) || { title:id, text:'(sem conteúdo)' };
+    const content = getContent(id) || { title:id, text:'' };
     refs.nodeTitle.textContent = content.title;
-    refs.nodeText.innerHTML = `<p>${content.text || '(sem conteúdo)'}</p>`;
+    refs.nodeText.innerHTML = `<p>${content.text || ''}</p>`;
 
     const schema = getUISchema(id, simRT.group);
     renderControls(schema, (key, value)=>{
@@ -84,6 +85,7 @@ export function gotoNode(targetId){
   });
 
   refs.currentNodeId = targetId;
+  refs.backBtn?.classList.remove('hidden');
   nodeGroup.userData.isActive = true;
   focusNode(targetId, nodeGroup);
 
@@ -136,7 +138,7 @@ export function exitToGraph(){
   refs.centerSimGroup.visible = false;
 
   refs.mindmapGroup.visible = true;
-  const camTo = new THREE.Vector3(0, 24, 110);
+  const camTo = new THREE.Vector3(10, 40, 60);
   const tgtTo = new THREE.Vector3(40, 0, 0);
   gsapLike(refs.camera.position, refs.camera.position.clone(), camTo, 0.9);
   gsapLike(refs.controls.target,  refs.controls.target.clone(),  tgtTo, 0.9);
@@ -144,4 +146,5 @@ export function exitToGraph(){
   refs.voteBtn?.classList.add('hidden');
   refs.statusEl.textContent = 'Mapa: selecione um nó';
   refs.currentNodeId = null;
+  refs.backBtn?.classList.add('hidden');
 }

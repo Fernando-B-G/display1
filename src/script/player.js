@@ -13,6 +13,12 @@ export class ScriptPlayer {
     this.abort = false;
     this._raf = null;
     this._tweeners = new Set();
+
+    // initial state for resetting
+    this._initCamPos = ctx.simCamera?.position.clone();
+    this._initCamTarget = ctx._camTarget ? ctx._camTarget.clone() : new THREE.Vector3();
+    this._initGroupPos = ctx.simGroup?.position.clone();
+    this._initGroupRot = ctx.simGroup?.rotation.clone();
   }
 
   load(steps){
@@ -63,6 +69,20 @@ export class ScriptPlayer {
     this._tweeners.forEach(t => t.cancel && t.cancel());
     this._tweeners.clear();
     this.ctx.updatePlayPauseState?.('stopped');
+
+    // reset sim state
+    this.ctx.simAPI?.reset?.();
+
+    if (this.ctx.simGroup){
+      if (this._initGroupPos) this.ctx.simGroup.position.copy(this._initGroupPos);
+      if (this._initGroupRot) this.ctx.simGroup.rotation.copy(this._initGroupRot);
+    }
+
+    if (this.ctx.simCamera){
+      if (this._initCamPos) this.ctx.simCamera.position.copy(this._initCamPos);
+      this.ctx._camTarget = this._initCamTarget ? this._initCamTarget.clone() : new THREE.Vector3();
+      this.ctx.simCamera.lookAt(this.ctx._camTarget);
+    }
   }
 
   // ===== executores de passos =====

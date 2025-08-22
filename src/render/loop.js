@@ -30,7 +30,10 @@ export function startLoop(){
     });
     refs.renderer.setRenderTarget(null);
 
-    nodeGroups.forEach(obj => obj.lookAt(refs.camera.position));
+    nodeGroups.forEach(obj => {
+      obj.quaternion.copy(refs.camera.quaternion);
+      /*obj.rotateY(Math.PI);*/
+    });
 
     if (refs.centerSimGroup.visible) updateCenterSim(refs.centerSimGroup, dt);
 

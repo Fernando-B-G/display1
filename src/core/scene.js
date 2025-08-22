@@ -12,7 +12,8 @@ export function initScene() {
   refs.scene.background = new THREE.Color(0x030417);
 
   refs.camera = new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 3000);
-  refs.camera.position.set(0, 24, 110);
+  refs.camera.position.set(10, 40, 60);
+  refs.camera.lookAt(40, 0, 0);
 
   refs.renderer = new THREE.WebGLRenderer({ antialias:true });
   refs.renderer.setSize(innerWidth, innerHeight);

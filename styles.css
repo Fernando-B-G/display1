@@ -59,23 +59,23 @@ label{ display:block; font-size:13px; color:#bfeaff; margin-bottom:6px }
 /* ===== Botão Voltar (id específico, SOBREPOR posição e largura) ===== */
 #backBtn {
   position: absolute;
-  top: 20px;
-  left: 50%;               /* centraliza horizontalmente */
-  transform: translateX(-50%); /* corrige para o centro exato */
+  top:20px;
+  left:20px;
+  transform:none;
   z-index: 10;
 
-  width: auto;
-  padding: 8px 16px;
-  font-size: 16px;
-  font-weight: bold;
+  width:auto;
+  padding:4px 8px;
+  font-size:24px;
+  font-weight:bold;
 
-  color: #fff;
-  background: rgba(0, 0, 0, 0.4);
-  border: 2px solid #fff;
-  border-radius: 6px;
+  color:#fff;
+  background:rgba(0, 0, 0, 0.4);
+  border:2px solid #fff;
+  border-radius:6px;
 
-  cursor: pointer;
-  transition: background 0.2s ease;
+  cursor:pointer;
+  transition:background 0.2s ease;
 }
 
 #backBtn:hover {
