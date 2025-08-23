@@ -63,7 +63,7 @@ export function buildSim_1(group) {
 
   // ---------- Feixe antes do prisma ----------
   const preBeam = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.05, 0.12, 2.0, 16, 1, true),
+    new THREE.CylinderGeometry(0.05, 0.05, 2.0, 16, 1, true),
     new THREE.MeshBasicMaterial({ color: 0xfff2cf, transparent:true, opacity:0.35, side:THREE.DoubleSide })
   );
   preBeam.rotation.z = Math.PI/2;
@@ -75,7 +75,7 @@ export function buildSim_1(group) {
     color: 0x88ccee, transparent:true, opacity:0.25, shininess: 120
   }));
   prism.position.set(-0.2, 0, 0);
-  prism.rotation.y = -0.28; // ângulo fixo
+  prism.rotation.z = Math.PI; // ângulo fixo
   prism.name = 'prism';
   root.add(prism);
 
@@ -91,6 +91,7 @@ export function buildSim_1(group) {
     new THREE.MeshBasicMaterial({ map: scrTex, transparent:true, opacity: 1.0 })
   );
   screen.position.set(1.8, 0, 0);
+  screen.rotation.z = -Math.PI / 2;
   root.add(screen);
 
   // moldura simples
@@ -98,24 +99,27 @@ export function buildSim_1(group) {
     new THREE.RingGeometry(1.22, 1.25, 64, 1, 0, Math.PI*2),
     new THREE.MeshBasicMaterial({ color:0x223344, transparent:true, opacity:0.2, side:THREE.DoubleSide })
   );
-  frame.rotation.y = Math.PI/2; // só um detalhe visual
+  frame.rotation.y = 0; // alinhado ao anteparo
   frame.visible = false; // opcional
   screen.add(frame);
 
   // ---------- Raios após o prisma ----------
   const postGroup = new THREE.Group();
   root.add(postGroup);
+
+  root.scale.set(3, 3, 3);
+
   group.userData.objects.push(srcG, preBeam, prism, screen, frame, postGroup);
 
   // criamos alguns "feixes" como finos planos coloridos que vão do prisma até a tela
   function createRay(color, offsetYFrac = 0) {
-    const len = 2.1; // distância prisma → tela
+    const len = screen.position.x - prism.position.x;
     const w = 0.02;
     const g = new THREE.PlaneGeometry(len, w);
     const m = new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.75, side:THREE.DoubleSide });
     const ray = new THREE.Mesh(g, m);
-    ray.rotation.y = Math.PI/2; // along x
-    ray.position.set(0.8, offsetYFrac*0.45, 0);
+    //ray.rotation.y = Math.PI/2; // along x
+    ray.position.set(prism.position.x + len/2, offsetYFrac*0.45, 0);
     return ray;
   }
 
