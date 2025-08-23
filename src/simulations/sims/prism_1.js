@@ -127,6 +127,14 @@ export function buildSim_1(group) {
     return (freq - REF_FREQ) * DISPERSION;
   }
 
+  function freqToScreenFrac(freq) {
+    const theta = freqToAngle(freq);
+    const dx = screen.position.x - prism.position.x;
+    const y = Math.tan(theta) * dx;
+    const width = screen.geometry.parameters.width;
+    return y / width + 0.5;
+  }
+
   function createRay(color, freq) {
     const theta = freqToAngle(freq);
     const len = (screen.position.x - prism.position.x) / Math.cos(theta) * 0.85;
@@ -193,7 +201,8 @@ export function buildSim_1(group) {
     ctx.fillRect(0, 0, w, h);
     // leve glow
     ctx.globalCompositeOperation = 'lighter';
-    lines.forEach(({ xFrac, color, width=4 })=>{
+    lines.forEach(({ freq, color, width=4 }) => {
+      const xFrac = freqToScreenFrac(freq);
       const x = Math.floor(xFrac * w);
       const grd = ctx.createLinearGradient(x-8, 0, x+8, 0);
       grd.addColorStop(0.0, 'rgba(0,0,0,0)');
@@ -215,36 +224,29 @@ export function buildSim_1(group) {
     return `rgba(${r},${g},${b},${a})`;
   }
 
-  // posições aproximadas (0..1 no eixo x do espectro)
-  const LINES = {
-    sodium: [
-      { xFrac: 0.55, color: 0xffd200, width: 5 },
-      { xFrac: 0.57, color: 0xffc000, width: 4 },
-    ],
-    mercury: [
-      { xFrac: 0.14, color: 0x7f00ff },
-      { xFrac: 0.36, color: 0x3f67ff },
-      { xFrac: 0.60, color: 0x00ff5c },
-      { xFrac: 0.70, color: 0xd0ff00 },
-    ],
-    hydrogen: [
-      { xFrac: 0.18, color: 0x7a2aff }, // ~410 nm
-      { xFrac: 0.29, color: 0x2a5bff }, // ~434 nm
-      { xFrac: 0.48, color: 0x2ee0ff }, // ~486 nm
-      { xFrac: 0.82, color: 0xff3b3b }  // ~656 nm
-    ]
-  };
-
   function updateScreenForSource() {
     const w = scrCanvas.width, h = scrCanvas.height;
     if (params.source.startsWith('Sol')) {
       drawContinuous(scrCtx, w, h);
     } else if (params.source.includes('Sódio')) {
-      drawLines(scrCtx, w, h, LINES.sodium);
+      drawLines(scrCtx, w, h, [
+        { freq: 510, color: 0xffd200, width: 5 },
+        { freq: 508, color: 0xffc000, width: 4 },
+      ]);
     } else if (params.source.includes('Mercúrio')) {
-      drawLines(scrCtx, w, h, LINES.mercury);
+      drawLines(scrCtx, w, h, [
+        { freq: 740, color: 0x7f00ff },
+        { freq: 690, color: 0x3f67ff },
+        { freq: 550, color: 0x00ff5c },
+        { freq: 520, color: 0xd0ff00 },
+      ]);
     } else if (params.source.includes('Hidrogênio')) {
-      drawLines(scrCtx, w, h, LINES.hydrogen);
+      drawLines(scrCtx, w, h, [
+        { freq: 731, color: 0x7a2aff }, // ~410 nm
+        { freq: 691, color: 0x2a5bff }, // ~434 nm
+        { freq: 617, color: 0x2ee0ff }, // ~486 nm
+        { freq: 457, color: 0xff3b3b }, // ~656 nm
+      ]);
     } else {
       // fallback
       drawContinuous(scrCtx, w, h);
