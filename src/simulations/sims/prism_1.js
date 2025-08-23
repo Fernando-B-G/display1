@@ -123,7 +123,7 @@ export function buildSim_1(group) {
    */
   function freqToAngle(freq) {
     const REF_FREQ = 550;       // THz (aprox. verde)
-    const DISPERSION = -0.004;  // rad/THz
+    const DISPERSION = -0.002;  // rad/THz
     return (freq - REF_FREQ) * DISPERSION;
   }
 
