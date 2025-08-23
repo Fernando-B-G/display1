@@ -112,42 +112,62 @@ export function buildSim_1(group) {
   group.userData.objects.push(srcG, preBeam, prism, screen, frame, postGroup);
 
   // criamos alguns "feixes" como finos planos coloridos que vão do prisma até a tela
-  function createRay(color, offsetYFrac = 0) {
-    const len = screen.position.x - prism.position.x;
+  /**
+   * Converte uma frequência de luz em um ângulo de saída.
+   * Utiliza um modelo linear simples de dispersão: 550 THz é mapeado
+   * para 0 rad e cada terahertz desloca o raio em ~0.002 rad.
+   * O coeficiente negativo indica que frequências menores (vermelho)
+   * desviam para cima e maiores (violeta) para baixo.
+   * @param {number} freq Frequência em terahertz.
+   * @returns {number} Ângulo em radianos.
+   */
+  function freqToAngle(freq) {
+    const REF_FREQ = 550;       // THz (aprox. verde)
+    const DISPERSION = -0.004;  // rad/THz
+    return (freq - REF_FREQ) * DISPERSION;
+  }
+
+  function createRay(color, freq) {
+    const theta = freqToAngle(freq);
+    const len = (screen.position.x - prism.position.x) / Math.cos(theta) * 0.85;
     const w = 0.02;
     const g = new THREE.PlaneGeometry(len, w);
     const m = new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.75, side:THREE.DoubleSide });
     const ray = new THREE.Mesh(g, m);
-    //ray.rotation.y = Math.PI/2; // along x
-    ray.position.set(prism.position.x + len/2, offsetYFrac*0.45, 0);
+    ray.rotation.z = theta;
+    ray.position.set(
+      prism.position.x + (len/2)*Math.cos(theta),
+      (len/2)*Math.sin(theta),
+      0
+    );
     return ray;
   }
 
   const rays = {
     continuous: [
-      createRay(0xff0000,  0.16),
-      createRay(0xff7f00,  0.12),
-      createRay(0xffff00,  0.08),
-      createRay(0x00ff00,  0.04),
-      createRay(0x00ffff,  0.00),
-      createRay(0x0000ff, -0.04),
-      createRay(0x8b00ff, -0.08),
+      createRay(0xff0000, 400), // vermelho
+      createRay(0xff7f00, 480), // laranja
+      createRay(0xffff00, 510), // amarelo
+      createRay(0x00ff00, 540), // verde
+      createRay(0x00ffff, 600), // ciano
+      createRay(0x0000ff, 650), // azul
+      createRay(0x8b00ff, 700), // violeta
     ],
     sodium: [
-      createRay(0xffd200, 0.02),
-      createRay(0xffc000,-0.02),
+      createRay(0xffd200, 508),
+      createRay(0xffc000, 510),
     ],
     mercury: [
-      createRay(0x7f00ff,  0.15), // violeta
-      createRay(0x3f67ff,  0.06), // azul
-      createRay(0x00ff5c, -0.02), // verde
-      createRay(0xd0ff00, -0.08), // amarelo-esverdeado
+      createRay(0x7f00ff, 740), // violeta
+      createRay(0x3f67ff, 690), // azul
+      createRay(0x00ff5c, 550), // verde
+      createRay(0xd0ff00, 520), // amarelo-esverdeado
     ],
     hydrogen: [
-      createRay(0xff3b3b,  0.14), // Hα ~ 656 nm
-      createRay(0x2ee0ff,  0.04), // Hβ ~ 486 nm (ciano/azul-esverdeado)
-      createRay(0x2a5bff, -0.02), // Hγ ~ 434 nm
-      createRay(0x7a2aff, -0.08), // Hδ ~ 410 nm
+      createRay(0xff3b3b, 457), // Hα ~656 nm
+      createRay(0x2ee0ff, 617), // Hβ ~486 nm
+      createRay(0x2a5bff, 691), // Hγ ~434 nm
+      createRay(0x7a2aff, 731), // Hδ ~410 nm
     ]
   };
   Object.values(rays).flat().forEach(r => postGroup.add(r));
