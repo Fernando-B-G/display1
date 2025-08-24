@@ -180,7 +180,7 @@ export function buildSim_1(group) {
     const dx = screen.position.x - prism.position.x;
     const y = Math.tan(theta) * dx;
     const width = screen.geometry.parameters.width;
-    return y / width + 0.5;
+    return 0.5 - y / width;
   }
 
   function createRay(color, freq) {
