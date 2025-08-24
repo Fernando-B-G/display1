@@ -127,6 +127,54 @@ export function buildSim_1(group) {
     return (freq - REF_FREQ) * DISPERSION;
   }
 
+  /**
+   * Converte uma frequência de luz visível em uma cor hexadecimal.
+   * O espectro visível vai de aproximadamente 405–790 THz (740–380 nm)
+   * e é dividido em intervalos que produzem as transições de cor abaixo:
+   *  - 405–480 THz: vermelho→laranja
+   *  - 480–510 THz: amarelo
+   *  - 510–580 THz: verde
+   *  - 580–650 THz: azul
+   *  - 650–790 THz: violeta
+   * Frequências fora desse intervalo são limitadas ao visível.
+   * @param {number} freq Frequência em terahertz
+   * @returns {number} Cor no formato 0xRRGGBB
+   */
+  function freqToColor(freq) {
+    const f = Math.max(405, Math.min(freq, 790));
+    const wl = 299792.458 / f; // nm
+
+    let r = 0, g = 0, b = 0;
+    if (wl >= 380 && wl < 440) {
+      r = -(wl - 440) / (440 - 380); g = 0; b = 1;
+    } else if (wl >= 440 && wl < 490) {
+      r = 0; g = (wl - 440) / (490 - 440); b = 1;
+    } else if (wl >= 490 && wl < 510) {
+      r = 0; g = 1; b = -(wl - 510) / (510 - 490);
+    } else if (wl >= 510 && wl < 580) {
+      r = (wl - 510) / (580 - 510); g = 1; b = 0;
+    } else if (wl >= 580 && wl < 645) {
+      r = 1; g = -(wl - 645) / (645 - 580); b = 0;
+    } else if (wl >= 645 && wl <= 750) {
+      r = 1; g = 0; b = 0;
+    }
+
+    let factor = 0;
+    if (wl >= 380 && wl < 420) {
+      factor = 0.3 + 0.7 * (wl - 380) / (420 - 380);
+    } else if (wl >= 420 && wl <= 700) {
+      factor = 1;
+    } else if (wl > 700 && wl <= 750) {
+      factor = 0.3 + 0.7 * (750 - wl) / (750 - 700);
+    }
+
+    const gamma = 0.8;
+    const R = Math.round(255 * Math.pow(r * factor, gamma));
+    const G = Math.round(255 * Math.pow(g * factor, gamma));
+    const B = Math.round(255 * Math.pow(b * factor, gamma));
+    return (R << 16) | (G << 8) | B;
+  }
+
   function freqToScreenFrac(freq) {
     const theta = freqToAngle(freq);
     const dx = screen.position.x - prism.position.x;
@@ -151,31 +199,32 @@ export function buildSim_1(group) {
     return ray;
   }
 
+ // frequências em THz cobrindo todo o espectro visível (~405–790 THz)
   const rays = {
     continuous: [
-      createRay(0xff0000, 400), // vermelho
-      createRay(0xff7f00, 480), // laranja
-      createRay(0xffff00, 510), // amarelo
-      createRay(0x00ff00, 540), // verde
-      createRay(0x00ffff, 600), // ciano
-      createRay(0x0000ff, 650), // azul
-      createRay(0x8b00ff, 700), // violeta
+      createRay(freqToColor(400), 400), // vermelho
+      createRay(freqToColor(480), 480), // laranja
+      createRay(freqToColor(510), 510), // amarelo
+      createRay(freqToColor(540), 540), // verde
+      createRay(freqToColor(600), 600), // ciano
+      createRay(freqToColor(650), 650), // azul
+      createRay(freqToColor(700), 700), // violeta
     ],
     sodium: [
-      createRay(0xffd200, 508),
-      createRay(0xffc000, 510),
+      createRay(freqToColor(508), 508),
+      createRay(freqToColor(510), 510),
     ],
     mercury: [
-      createRay(0x7f00ff, 740), // violeta
-      createRay(0x3f67ff, 690), // azul
-      createRay(0x00ff5c, 550), // verde
-      createRay(0xd0ff00, 520), // amarelo-esverdeado
+      createRay(freqToColor(740), 740), // violeta
+      createRay(freqToColor(690), 690), // azul
+      createRay(freqToColor(550), 550), // verde
+      createRay(freqToColor(520), 520), // amarelo-esverdeado
     ],
     hydrogen: [
-      createRay(0xff3b3b, 457), // Hα ~656 nm
-      createRay(0x2ee0ff, 617), // Hβ ~486 nm
-      createRay(0x2a5bff, 691), // Hγ ~434 nm
-      createRay(0x7a2aff, 731), // Hδ ~410 nm
+      createRay(freqToColor(457), 457), // Hα ~656 nm
+      createRay(freqToColor(617), 617), // Hβ ~486 nm
+      createRay(freqToColor(691), 691), // Hγ ~434 nm
+      createRay(freqToColor(731), 731), // Hδ ~410 nm
     ]
   };
   Object.values(rays).flat().forEach(r => postGroup.add(r));
@@ -230,22 +279,22 @@ export function buildSim_1(group) {
       drawContinuous(scrCtx, w, h);
     } else if (params.source.includes('Sódio')) {
       drawLines(scrCtx, w, h, [
-        { freq: 510, color: 0xffd200, width: 5 },
-        { freq: 508, color: 0xffc000, width: 4 },
+        { freq: 510, color: freqToColor(508), width: 5 },
+        { freq: 508, color: freqToColor(510), width: 4 },
       ]);
     } else if (params.source.includes('Mercúrio')) {
       drawLines(scrCtx, w, h, [
-        { freq: 740, color: 0x7f00ff },
-        { freq: 690, color: 0x3f67ff },
-        { freq: 550, color: 0x00ff5c },
-        { freq: 520, color: 0xd0ff00 },
+        { freq: 740, color: freqToColor(740) },
+        { freq: 690, color: freqToColor(690) },
+        { freq: 550, color: freqToColor(550) },
+        { freq: 520, color: freqToColor(520) },
       ]);
     } else if (params.source.includes('Hidrogênio')) {
       drawLines(scrCtx, w, h, [
-        { freq: 731, color: 0x7a2aff }, // ~410 nm
-        { freq: 691, color: 0x2a5bff }, // ~434 nm
-        { freq: 617, color: 0x2ee0ff }, // ~486 nm
-        { freq: 457, color: 0xff3b3b }, // ~656 nm
+        { freq: 731, color: freqToColor(731) }, // ~410 nm
+        { freq: 691, color: freqToColor(691) }, // ~434 nm
+        { freq: 617, color: freqToColor(617) }, // ~486 nm
+        { freq: 457, color: freqToColor(457) }, // ~656 nm
       ]);
     } else {
       // fallback
