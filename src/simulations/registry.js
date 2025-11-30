@@ -6,6 +6,7 @@ import { buildSim_4 } from './sims/sterngerlach_4.js';
 import { buildSim_1 as buildPrism } from './sims/prism_1.js';
 import { buildSim_fallback } from './sims/fallback.js';
 import { buildSim_cube } from './sims/cube_demo.js';
+import { buildSim_3 } from './sims/bohr_3.js'; 
 
 
 
@@ -16,6 +17,7 @@ import { buildSim_1 } from './sims/intro_1.js';
 
 export const REGISTRY = {
   '1' : buildPrism, // (ou o id/string que você usa para o nó 1),  // ⬅️ novo
+  '3' : buildSim_3, 
   '5a': buildSim_5a,
   '7' : buildSim_7,
   '4' : buildSim_cube

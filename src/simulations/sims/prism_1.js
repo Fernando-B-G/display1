@@ -1,390 +1,290 @@
-// src/simulations/sims/prism_1.js
 import * as THREE from 'three';
-import { attachHighlighter } from '../highlight.js';
 
 export function buildSim_1(group) {
-  // ---------- Parâmetros (alinhado ao seu roteiro) ----------
+  // === Parâmetros ===
   const params = {
-    source: 'Sol (contínuo)',
-    showSource: true,
-    showPreBeam: true,
-    showPrism: true,
-    showPostRays: true,
-    showScreen: true
+    source: 'Sol (Contínuo)', 
+    speed: 1.5,
+    prismIndex: 1.5,
+    dispersion: 0.08 // Aumentei um pouco para separar mais as cores
   };
 
-  group.userData.uiSchema = [
-    { id:'source', type:'select', label:'Fonte', value:params.source, options:[
-      'Sol (contínuo)', 'Lâmpada de Sódio', 'Lâmpada de Mercúrio', 'Lâmpada de Hidrogênio'
-    ]},
-    { id:'showSource',   type:'toggle', label:'Mostrar fonte', value:params.showSource },
-    { id:'showPreBeam',  type:'toggle', label:'Mostrar feixe antes', value:params.showPreBeam },
-    { id:'showPrism',    type:'toggle', label:'Mostrar prisma', value:params.showPrism },
-    { id:'showPostRays', type:'toggle', label:'Mostrar raios após', value:params.showPostRays },
-    { id:'showScreen',   type:'toggle', label:'Mostrar anteparo', value:params.showScreen },
-  ];
+  const state = {
+    progress: 0, 
+    wavelengths: [] 
+  };
 
-  // ---------- Raiz local ----------
+  // === Cena Local ===
   const root = new THREE.Group();
-  root.position.set(0, 0.65, 0);
   group.add(root);
 
-  // ---------- Luz ambiente leve para dar volume ----------
-  const amb = new THREE.AmbientLight(0xffffff, 0.35);
-  const key = new THREE.DirectionalLight(0xffffff, 0.6);
-  key.position.set(2, 3, 2);
-  root.add(amb, key);
-
-  // ---------- Fonte (lâmpada genérica + abertura) ----------
-  const srcG = new THREE.Group();
-  root.add(srcG);
-
+  // 1. Fonte de Luz (Esquerda)
+  const sourceMesh = new THREE.Group();
   const bulb = new THREE.Mesh(
-    new THREE.SphereGeometry(0.18, 24, 16),
-    new THREE.MeshPhongMaterial({ color: 0xfff4cc, emissive: 0xffe7a3, emissiveIntensity: 0.8, shininess: 60 })
+    new THREE.SphereGeometry(0.4, 32, 32),
+    new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffee, emissiveIntensity: 1 })
   );
-  const cap = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.1, 0.1, 0.16, 20),
-    new THREE.MeshPhongMaterial({ color: 0x888888, shininess: 20 })
+  const box = new THREE.Mesh(
+    new THREE.BoxGeometry(1, 1, 1.5),
+    new THREE.MeshStandardMaterial({ color: 0x333333 })
   );
-  cap.position.y = -0.22; bulb.add(cap);
+  box.position.x = -0.5;
+  sourceMesh.add(box, bulb);
+  sourceMesh.position.set(-6, 1, 0);
+  root.add(sourceMesh);
 
-  const nozzle = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.02, 0.02, 0.06, 16),
-    new THREE.MeshPhongMaterial({ color: 0x555555 })
-  );
-  nozzle.rotation.z = Math.PI/2;
-  nozzle.position.set(0.32, 0, 0);
-  srcG.add(bulb, nozzle);
-
-  // posição e orientação da fonte
-  srcG.position.set(-2.3, 0, 0);
-  srcG.rotation.y = 0;
-
-  // ---------- Feixe antes do prisma ----------
-  const preBeam = new THREE.Mesh(
-    new THREE.CylinderGeometry(0.05, 0.05, 2.0, 16, 1, true),
-    new THREE.MeshBasicMaterial({ color: 0xfff2cf, transparent:true, opacity:0.35, side:THREE.DoubleSide })
-  );
-  preBeam.rotation.z = Math.PI/2;
-  preBeam.position.set(-1.3, 0, 0);
-  root.add(preBeam);
-
-  // ---------- Prisma triangular (vidro) ----------
-  const prism = new THREE.Mesh(makeTriPrismGeometry(0.6, 0.6, 0.8), new THREE.MeshPhongMaterial({
-    color: 0x88ccee, transparent:true, opacity:0.25, shininess: 120
-  }));
-  prism.position.set(-0.2, 0, 0);
-  prism.rotation.z = Math.PI; // ângulo fixo
-  prism.name = 'prism';
+  // 2. Prisma (Centro)
+  const shape = new THREE.Shape();
+  shape.moveTo(-1, -1);
+  shape.lineTo(1, -1);
+  shape.lineTo(0, 1.2);
+  shape.lineTo(-1, -1);
+  const prismGeom = new THREE.ExtrudeGeometry(shape, { depth: 1.5, bevelEnabled: false });
+  prismGeom.translate(0, 0, -0.75); 
+  const prismMat = new THREE.MeshPhysicalMaterial({
+    color: 0xaaccff, transmission: 0.9, opacity: 0.8,
+    metalness: 0, roughness: 0, ior: 1.5, thickness: 2.0, transparent: true
+  });
+  const prism = new THREE.Mesh(prismGeom, prismMat);
+  prism.position.set(0, 1, 0);
   root.add(prism);
 
-  // ---------- Anteparo (tela) com CanvasTexture ----------
-  const scrCanvas = document.createElement('canvas');
-  scrCanvas.width = 640; scrCanvas.height = 140;
-  const scrCtx = scrCanvas.getContext('2d');
-  const scrTex = new THREE.CanvasTexture(scrCanvas);
-  scrTex.minFilter = THREE.LinearFilter;
-
+  // 3. Anteparo (Direita) - CORRIGIDO (Em pé e virado para o prisma)
+  const screenW = 6;
+  const screenH = 3;
+  const canvas = document.createElement('canvas');
+  canvas.width = 512; canvas.height = 128;
+  const ctx = canvas.getContext('2d');
+  const screenTex = new THREE.CanvasTexture(canvas);
+  
   const screen = new THREE.Mesh(
-    new THREE.PlaneGeometry(2.4, 0.6),
-    new THREE.MeshBasicMaterial({ map: scrTex, transparent:true, opacity: 1.0 })
+    new THREE.PlaneGeometry(screenW, screenH),
+    new THREE.MeshBasicMaterial({ map: screenTex, side: THREE.DoubleSide })
   );
-  screen.position.set(1.8, 0, 0);
-  screen.rotation.z = -Math.PI / 2;
+  // Posição X=6. Rotação Y=-90 graus faz o plano (que nasce +Z) virar para -X (encarar o prisma)
+  screen.position.set(6, 1, 0);
+  screen.rotation.y = -Math.PI / 2; 
   root.add(screen);
 
-  // moldura simples
-  const frame = new THREE.Mesh(
-    new THREE.RingGeometry(1.22, 1.25, 64, 1, 0, Math.PI*2),
-    new THREE.MeshBasicMaterial({ color:0x223344, transparent:true, opacity:0.2, side:THREE.DoubleSide })
-  );
-  frame.rotation.y = 0; // alinhado ao anteparo
-  frame.visible = false; // opcional
-  screen.add(frame);
+  // Grupos de Feixes
+  const incomingGroup = new THREE.Group();
+  const outgoingGroup = new THREE.Group();
+  root.add(incomingGroup, outgoingGroup);
 
-  // ---------- Raios após o prisma ----------
-  const postGroup = new THREE.Group();
-  root.add(postGroup);
+  // Raycaster para física exata
+  const raycaster = new THREE.Raycaster();
 
-  root.scale.set(3, 3, 3);
+  // === Helpers ===
 
-  group.userData.objects.push(srcG, preBeam, prism, screen, frame, postGroup);
+  function nmToColor(nm) {
+    let r=0, g=0, b=0;
+    if (nm >= 380 && nm < 440) { r = -(nm - 440) / (440 - 380); g = 0; b = 1; }
+    else if (nm >= 440 && nm < 490) { r = 0; g = (nm - 440) / (490 - 440); b = 1; }
+    else if (nm >= 490 && nm < 510) { r = 0; g = 1; b = -(nm - 510) / (510 - 490); }
+    else if (nm >= 510 && nm < 580) { r = (nm - 510) / (580 - 510); g = 1; b = 0; }
+    else if (nm >= 580 && nm < 645) { r = 1; g = -(nm - 645) / (645 - 580); b = 0; }
+    else if (nm >= 645 && nm <= 780) { r = 1; g = 0; b = 0; }
+    
+    let alpha = 1;
+    if (nm > 700) alpha = 0.3 + 0.7 * (780 - nm) / (780 - 700);
+    if (nm < 420) alpha = 0.3 + 0.7 * (nm - 380) / (420 - 380);
 
-  // criamos alguns "feixes" como finos planos coloridos que vão do prisma até a tela
-  /**
-   * Converte uma frequência de luz em um ângulo de saída.
-   * Utiliza um modelo linear simples de dispersão: 550 THz é mapeado
-   * para 0 rad e cada terahertz desloca o raio em ~0.002 rad.
-   * O coeficiente negativo indica que frequências menores (vermelho)
-   * desviam para cima e maiores (violeta) para baixo.
-   * @param {number} freq Frequência em terahertz.
-   * @returns {number} Ângulo em radianos.
-   */
-  function freqToAngle(freq) {
-    const REF_FREQ = 550;       // THz (aprox. verde)
-    const DISPERSION = -0.002;  // rad/THz
-    return (freq - REF_FREQ) * DISPERSION;
+    return new THREE.Color(r * alpha, g * alpha, b * alpha);
   }
 
-  /**
-   * Converte uma frequência de luz visível em uma cor hexadecimal.
-   * O espectro visível vai de aproximadamente 405–790 THz (740–380 nm)
-   * e é dividido em intervalos que produzem as transições de cor abaixo:
-   *  - 405–480 THz: vermelho→laranja
-   *  - 480–510 THz: amarelo
-   *  - 510–580 THz: verde
-   *  - 580–650 THz: azul
-   *  - 650–790 THz: violeta
-   * Frequências fora desse intervalo são limitadas ao visível.
-   * @param {number} freq Frequência em terahertz
-   * @returns {number} Cor no formato 0xRRGGBB
-   */
-  function freqToColor(freq) {
-    const f = Math.max(405, Math.min(freq, 790));
-    const wl = 299792.458 / f; // nm
+  function getDeviationAngle(nm) {
+    // Cauchy: n = A + B/lambda^2
+    // Violeta (400) desvia MAIS que Vermelho (700)
+    const lambdaSq = (nm / 1000) * (nm / 1000); 
+    const n = params.prismIndex + (params.dispersion / lambdaSq);
+    
+    // Desvio angular arbitrário para fins estéticos (0 rad = reto)
+    // Ajuste para espalhar bem na tela
+    // Violeta (n alto) -> ângulo positivo
+    // Vermelho (n baixo) -> ângulo negativo
+    return (n - 1.6) * 1.5; 
+  }
 
-    let r = 0, g = 0, b = 0;
-    if (wl >= 380 && wl < 440) {
-      r = -(wl - 440) / (440 - 380); g = 0; b = 1;
-    } else if (wl >= 440 && wl < 490) {
-      r = 0; g = (wl - 440) / (490 - 440); b = 1;
-    } else if (wl >= 490 && wl < 510) {
-      r = 0; g = 1; b = -(wl - 510) / (510 - 490);
-    } else if (wl >= 510 && wl < 580) {
-      r = (wl - 510) / (580 - 510); g = 1; b = 0;
-    } else if (wl >= 580 && wl < 645) {
-      r = 1; g = -(wl - 645) / (645 - 580); b = 0;
-    } else if (wl >= 645 && wl <= 750) {
-      r = 1; g = 0; b = 0;
+  // === Setup ===
+
+  function updateWavelengths() {
+    state.wavelengths = [];
+    // Define lista de comp. de onda baseado na fonte
+    if (params.source.includes('Sol')) {
+      for (let nm = 380; nm <= 750; nm += 8) { // Amostragem densa
+        state.wavelengths.push({ nm, color: nmToColor(nm) });
+      }
+    } else if (params.source.includes('Hidrogênio')) {
+      [656, 486, 434, 410].forEach(nm => state.wavelengths.push({ nm, color: nmToColor(nm) }));
+    } else if (params.source.includes('Sódio')) {
+      [589, 589.6].forEach(nm => state.wavelengths.push({ nm, color: nmToColor(nm) }));
+    } else if (params.source.includes('Mercúrio')) {
+      [436, 546, 577, 579].forEach(nm => state.wavelengths.push({ nm, color: nmToColor(nm) }));
     }
 
-    let factor = 0;
-    if (wl >= 380 && wl < 420) {
-      factor = 0.3 + 0.7 * (wl - 380) / (420 - 380);
-    } else if (wl >= 420 && wl <= 700) {
-      factor = 1;
-    } else if (wl > 700 && wl <= 750) {
-      factor = 0.3 + 0.7 * (750 - wl) / (750 - 700);
-    }
-
-    const gamma = 0.8;
-    const R = Math.round(255 * Math.pow(r * factor, gamma));
-    const G = Math.round(255 * Math.pow(g * factor, gamma));
-    const B = Math.round(255 * Math.pow(b * factor, gamma));
-    return (R << 16) | (G << 8) | B;
+    rebuildBeams();
+    state.progress = 0; 
   }
 
-  function freqToScreenFrac(freq) {
-    const theta = freqToAngle(freq);
-    const dx = screen.position.x - prism.position.x;
-    const y = Math.tan(theta) * dx;
-    const width = screen.geometry.parameters.width;
-    return 0.5 - y / width;
-  }
+  function rebuildBeams() {
+    incomingGroup.clear();
+    outgoingGroup.clear();
 
-  function createRay(color, freq) {
-    const theta = freqToAngle(freq);
-    const len = (screen.position.x - prism.position.x) / Math.cos(theta) * 0.85;
-    const w = 0.02;
-    const g = new THREE.PlaneGeometry(len, w);
-    const m = new THREE.MeshBasicMaterial({ color, transparent:true, opacity:0.75, side:THREE.DoubleSide });
-    const ray = new THREE.Mesh(g, m);
-    ray.rotation.z = theta;
-    ray.position.set(
-      prism.position.x + (len/2)*Math.cos(theta),
-      (len/2)*Math.sin(theta),
-      0
-    );
-    return ray;
-  }
-
- // frequências em THz cobrindo todo o espectro visível (~405–790 THz)
-  const rays = {
-    continuous: [
-      createRay(freqToColor(400), 400), // vermelho
-      createRay(freqToColor(480), 480), // laranja
-      createRay(freqToColor(510), 510), // amarelo
-      createRay(freqToColor(540), 540), // verde
-      createRay(freqToColor(600), 600), // ciano
-      createRay(freqToColor(650), 650), // azul
-      createRay(freqToColor(700), 700), // violeta
-    ],
-    sodium: [
-      createRay(freqToColor(508), 508),
-      createRay(freqToColor(510), 510),
-    ],
-    mercury: [
-      createRay(freqToColor(740), 740), // violeta
-      createRay(freqToColor(690), 690), // azul
-      createRay(freqToColor(550), 550), // verde
-      createRay(freqToColor(520), 520), // amarelo-esverdeado
-    ],
-    hydrogen: [
-      createRay(freqToColor(457), 457), // Hα ~656 nm
-      createRay(freqToColor(617), 617), // Hβ ~486 nm
-      createRay(freqToColor(691), 691), // Hγ ~434 nm
-      createRay(freqToColor(731), 731), // Hδ ~410 nm
-    ]
-  };
-  Object.values(rays).flat().forEach(r => postGroup.add(r));
-
-  // ---------- Funções de desenho do espectro na tela ----------
-  function drawContinuous(ctx, w, h) {
-    const grad = ctx.createLinearGradient(0, 0, w, 0);
-    // arco-íris simples (não físico)
-    grad.addColorStop(0.00, '#f00');
-    grad.addColorStop(0.17, '#ff7f00');
-    grad.addColorStop(0.33, '#ff0');
-    grad.addColorStop(0.50, '#0f0');
-    grad.addColorStop(0.67, '#0ff');
-    grad.addColorStop(0.83, '#00f');
-    grad.addColorStop(1.00, '#8b00ff');
-    ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, w, h);
-  }
-
-  function drawLines(ctx, w, h, lines) {
-    // fundo escuro
-    ctx.fillStyle = '#0b0b12';
-    ctx.fillRect(0, 0, w, h);
-    // leve glow
-    ctx.globalCompositeOperation = 'lighter';
-    lines.forEach(({ freq, color, width=4 }) => {
-      const xFrac = freqToScreenFrac(freq);
-      const x = Math.floor(xFrac * w);
-      const grd = ctx.createLinearGradient(x-8, 0, x+8, 0);
-      grd.addColorStop(0.0, 'rgba(0,0,0,0)');
-      grd.addColorStop(0.45, hexToRgba(color, 0.15));
-      grd.addColorStop(0.5,  hexToRgba(color, 0.8));
-      grd.addColorStop(0.55, hexToRgba(color, 0.15));
-      grd.addColorStop(1.0, 'rgba(0,0,0,0)');
-      ctx.fillStyle = grd;
-      ctx.fillRect(x-8, 0, 16, h);
-
-      ctx.fillStyle = hexToRgba(color, 1.0);
-      ctx.fillRect(x - Math.round(width/2), 0, width, h);
+    // 1. Feixe de Entrada
+    const distToPrism = 6; 
+    const inGeom = new THREE.PlaneGeometry(distToPrism, 0.4);
+    inGeom.translate(distToPrism / 2, 0, 0); 
+    
+    const inColor = params.source.includes('Sol') ? 0xffffff : state.wavelengths[0].color;
+    const inMat = new THREE.MeshBasicMaterial({ 
+      color: inColor, transparent: true, opacity: 0.6, 
+      side: THREE.DoubleSide, blending: THREE.AdditiveBlending 
     });
-    ctx.globalCompositeOperation = 'source-over';
+    const inBeam = new THREE.Mesh(inGeom, inMat);
+    inBeam.position.copy(sourceMesh.position);
+    inBeam.lookAt(prism.position);
+    incomingGroup.add(inBeam);
+
+    // 2. Feixes de Saída (Calculados via Raycast)
+    state.wavelengths.forEach(wl => {
+      // Origem: Prisma
+      const origin = prism.position.clone();
+      
+      // Direção: Baseada no desvio
+      const angleY = getDeviationAngle(wl.nm);
+      const dir = new THREE.Vector3(Math.cos(angleY), 0, Math.sin(angleY)).normalize();
+
+      // Raycast contra o anteparo para achar ponto exato de impacto
+      raycaster.set(origin, dir);
+      const intersects = raycaster.intersectObject(screen);
+
+      let dist = 10; // Fallback se não bater
+      let hitUV = null;
+
+      if (intersects.length > 0) {
+        dist = intersects[0].distance;
+        hitUV = intersects[0].uv; // Coordenada (0..1) na textura onde bateu
+      }
+
+      // Cria geometria com o tamanho exato da distância
+      const outGeom = new THREE.PlaneGeometry(dist, 0.4);
+      outGeom.translate(dist / 2, 0, 0);
+      
+      const outMat = new THREE.MeshBasicMaterial({
+        color: wl.color, transparent: true, 
+        opacity: params.source.includes('Sol') ? 0.1 : 0.8,
+        side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
+      });
+
+      const outBeam = new THREE.Mesh(outGeom, outMat);
+      outBeam.position.copy(origin);
+      
+      // Orienta o feixe para a direção calculada
+      // lookAt espera um ponto alvo. Alvo = origin + dir
+      const target = origin.clone().add(dir);
+      outBeam.lookAt(target);
+
+      // Salva metadados no mesh para animação e pintura
+      outBeam.userData = { 
+        nm: wl.nm, 
+        color: wl.color, 
+        hitUV: hitUV // Guarda onde bateu na tela (0..1)
+      };
+      
+      outBeam.scale.x = 0; // Começa encolhido
+      outgoingGroup.add(outBeam);
+    });
   }
 
-  function hexToRgba(hex, a=1) {
-    const r = (hex>>16)&255, g=(hex>>8)&255, b=hex&255;
-    return `rgba(${r},${g},${b},${a})`;
-  }
+  function updateScreenTexture(beamsHit) {
+    ctx.fillStyle = '#050505';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
 
-  function updateScreenForSource() {
-    const w = scrCanvas.width, h = scrCanvas.height;
-    if (params.source.startsWith('Sol')) {
-      drawContinuous(scrCtx, w, h);
-    } else if (params.source.includes('Sódio')) {
-      drawLines(scrCtx, w, h, [
-        { freq: 510, color: freqToColor(508), width: 5 },
-        { freq: 508, color: freqToColor(510), width: 4 },
-      ]);
-    } else if (params.source.includes('Mercúrio')) {
-      drawLines(scrCtx, w, h, [
-        { freq: 740, color: freqToColor(740) },
-        { freq: 690, color: freqToColor(690) },
-        { freq: 550, color: freqToColor(550) },
-        { freq: 520, color: freqToColor(520) },
-      ]);
-    } else if (params.source.includes('Hidrogênio')) {
-      drawLines(scrCtx, w, h, [
-        { freq: 731, color: freqToColor(731) }, // ~410 nm
-        { freq: 691, color: freqToColor(691) }, // ~434 nm
-        { freq: 617, color: freqToColor(617) }, // ~486 nm
-        { freq: 457, color: freqToColor(457) }, // ~656 nm
-      ]);
-    } else {
-      // fallback
-      drawContinuous(scrCtx, w, h);
+    if (!beamsHit) {
+      screenTex.needsUpdate = true;
+      return;
     }
-    scrTex.needsUpdate = true;
+
+    // Pinta baseado onde os raios realmente bateram (hitUV)
+    outgoingGroup.children.forEach(beam => {
+      const uv = beam.userData.hitUV;
+      const col = beam.userData.color;
+      
+      if (uv) {
+        const x = uv.x * canvas.width;
+        
+        // Largura e opacidade da linha
+        const w = params.source.includes('Sol') ? 12 : 6; // Sol = mais borrado
+        const alpha = params.source.includes('Sol') ? 0.3 : 1.0;
+
+        const grd = ctx.createLinearGradient(x - w, 0, x + w, 0);
+        grd.addColorStop(0, `rgba(0,0,0,0)`);
+        grd.addColorStop(0.5, `rgba(${col.r*255}, ${col.g*255}, ${col.b*255}, ${alpha})`);
+        grd.addColorStop(1, `rgba(0,0,0,0)`);
+        
+        ctx.fillStyle = grd;
+        ctx.fillRect(x - w, 0, w * 2, canvas.height);
+      }
+    });
+
+    // Labels
+    ctx.fillStyle = '#ffffff';
+    ctx.font = '12px monospace';
+    ctx.textAlign = 'left'; ctx.fillText('UV', 10, 20);
+    ctx.textAlign = 'right'; ctx.fillText('IR', canvas.width-10, 20);
+
+    screenTex.needsUpdate = true;
   }
 
-  function updatePostRaysForSource() {
-    // esconde tudo
-    Object.values(rays).flat().forEach(r => r.visible = false);
-    if (params.source.startsWith('Sol')) {
-      rays.continuous.forEach(r => r.visible = true);
-    } else if (params.source.includes('Sódio')) {
-      rays.sodium.forEach(r => r.visible = true);
-    } else if (params.source.includes('Mercúrio')) {
-      rays.mercury.forEach(r => r.visible = true);
-    } else if (params.source.includes('Hidrogênio')) {
-      rays.hydrogen.forEach(r => r.visible = true);
-    }
-  }
+  // === Inicializa ===
+  updateWavelengths();
 
-  // inicializa espectro e raios
-  updateScreenForSource();
-  updatePostRaysForSource();
-
-  // ---------- Visibilidade controlável ----------
-  function applyVisibility() {
-    srcG.visible     = params.showSource;
-    preBeam.visible  = params.showPreBeam;
-    prism.visible    = params.showPrism;
-    postGroup.visible= params.showPostRays;
-    screen.visible   = params.showScreen;
-  }
-  applyVisibility();
-
-
-  // ---------- Animação sutil (pulsação do brilho) ----------
-  let t = 0;
+  // === Animação ===
   group.userData.anim = (dt) => {
-    t += dt;
-    const pulse = 0.3 + 0.2 * Math.sin(t*2.0);
-    (Array.isArray(prism.material) ? prism.material : [prism.material]).forEach(m=>{
-      m.opacity = 0.22 + pulse*0.06;
-      m.needsUpdate = true;
-    });
-    // leve pulso nos raios
-    Object.values(rays).flat().forEach(r=>{
-      r.material.opacity = 0.65 + 0.10*Math.sin(t*3.0);
-    });
+    state.progress += dt * params.speed;
+    if (state.progress > 2.5) state.progress = 2.5;
+
+    // 1. Feixe de Entrada cresce
+    if (incomingGroup.children[0]) {
+      incomingGroup.children[0].scale.x = Math.min(1, Math.max(0, state.progress));
+    }
+
+    // 2. Feixes de Saída crescem
+    const outProgress = Math.min(1, Math.max(0, state.progress - 1));
+    outgoingGroup.children.forEach(b => b.scale.x = outProgress);
+
+    // 3. Pinta a tela só quando a luz chega lá (progress > 1.9)
+    const beamsHit = state.progress > 1.9;
+    
+    // Otimização: só repinta se mudou o estado de "bater na tela" ou se for Sol (efeito visual)
+    // Para simplificar, pintamos sempre que beamsHit for true para manter o brilho
+    if (beamsHit) updateScreenTexture(true);
+    else if (state.progress < 1.1) updateScreenTexture(false); // Limpa se reiniciar
+
+    // Giro leve do prisma
+    prism.rotation.y = Math.sin(performance.now() * 0.0005) * 0.1;
   };
 
-  // ---------- API ----------
-  const highlight = attachHighlighter(group, root);
+  // === API ===
   group.userData.api = {
     set: (k, v) => {
       if (k === 'source') {
-        params.source = String(v);
-        updateScreenForSource();
-        updatePostRaysForSource();
-      } else if (k in params) {
-        params[k] = (typeof params[k] === 'boolean') ? !!v : v;
-        applyVisibility();
+        params.source = v;
+        updateWavelengths();
       }
+      if (k === 'speed') params.speed = v;
     },
-    get: (k) => params[k],
-    highlight
+    get: (k) => params[k]
   };
+
+  group.userData.uiSchema = [
+    { id: 'source', label: 'Fonte de Luz', type: 'select', options: ['Sol (Contínuo)', 'Hidrogênio', 'Sódio', 'Mercúrio'], value: 'Sol (Contínuo)' },
+    { id: 'speeds', label: 'Velocidade', type: 'range', min: 0.1, max: 3.0, step: 0.1, value: 1.5 }
+  ];
 
   group.userData.dispose = () => {
-    root.removeFromParent();
-    // dispose básico
-    preBeam.geometry.dispose(); preBeam.material.dispose();
-    prism.geometry.dispose(); (Array.isArray(prism.material)?prism.material:[prism.material]).forEach(m=>m.dispose());
-    screen.geometry.dispose(); screen.material.dispose();
-    Object.values(rays).flat().forEach(r => { r.geometry.dispose(); r.material.dispose(); });
+    root.clear();
+    group.remove(root);
+    screenTex.dispose();
   };
-
-  // ---------- Helpers ----------
-  function makeTriPrismGeometry(width=1, height=0.6, depth=0.6) {
-    // prisma triangular a partir de 2 triângulos e faces laterais
-    const hw = width/2, hh = height/2, hd = depth/2;
-    const shape = new THREE.Shape();
-    shape.moveTo(-hw, -hh);
-    shape.lineTo( hw, -hh);
-    shape.lineTo( 0 ,  hh);
-    shape.lineTo(-hw, -hh);
-    const extrude = new THREE.ExtrudeGeometry(shape, { depth: depth, bevelEnabled:false });
-    extrude.translate(0,0,-hd);
-    extrude.rotateX(Math.PI); // “em pé”
-    return extrude;
-  }
 }

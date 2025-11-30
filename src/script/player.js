@@ -1,10 +1,9 @@
 // src/script/player.js
 import * as THREE from 'three';
-// Pequeno “engine” de roteiro com passos sequenciais e tweens.
+import { updateControlDisplay } from '../ui.js'; // <--- IMPORTANTE
 
 export class ScriptPlayer {
   constructor(ctx){
-    // ctx: { nodeId, simGroup, simAPI, simCamera, setText, updatePlayPauseState, onEnd }
     this.ctx = ctx;
     this.steps = [];
     this.i = 0;
@@ -14,7 +13,6 @@ export class ScriptPlayer {
     this._raf = null;
     this._tweeners = new Set();
 
-    // initial state for resetting
     this._initCamPos = ctx.simCamera?.position.clone();
     this._initCamTarget = ctx._camTarget ? ctx._camTarget.clone() : new THREE.Vector3();
     this._initGroupPos = ctx.simGroup?.position.clone();
@@ -70,7 +68,6 @@ export class ScriptPlayer {
     this._tweeners.clear();
     this.ctx.updatePlayPauseState?.('stopped');
 
-    // reset sim state
     this.ctx.simAPI?.reset?.();
 
     if (this.ctx.simGroup){
@@ -85,7 +82,6 @@ export class ScriptPlayer {
     }
   }
 
-  // ===== executores de passos =====
   async _runStep(step){
     if (!step) return;
 
@@ -107,7 +103,11 @@ export class ScriptPlayer {
 
     if (step.set){
       const o = step.set;
-      Object.keys(o).forEach(k => this.ctx.simAPI?.set?.(k, o[k]));
+      Object.keys(o).forEach(k => {
+        this.ctx.simAPI?.set?.(k, o[k]);
+        // Atualiza a UI para refletir a mudança do script
+        updateControlDisplay(k, o[k]); // <--- ATUALIZAÇÃO UI
+      });
       return;
     }
 
@@ -115,15 +115,19 @@ export class ScriptPlayer {
       const { key, to, dur=800, ease='easeInOut' } = step.tween;
       const from = this.ctx.simAPI?.get?.(key);
       if (typeof from === 'number' && typeof to === 'number'){
-        await this._tweenValue(v => this.ctx.simAPI.set(key, v), from, to, dur, ease);
+        await this._tweenValue(v => {
+          this.ctx.simAPI.set(key, v);
+          // Opcional: atualizar slider durante tween pode ser pesado, mas visualmente legal
+          // updateControlDisplay(key, v); 
+        }, from, to, dur, ease);
+        // Garante valor final na UI
+        updateControlDisplay(key, to); // <--- ATUALIZAÇÃO UI FINAL
       }
       return;
     }
 
     if (step.highlight){
-      const h = typeof step.highlight === 'string'
-        ? { id: step.highlight }
-        : step.highlight;
+      const h = typeof step.highlight === 'string' ? { id: step.highlight } : step.highlight;
       const dur = h.dur ?? step.dur;
       const opts = h.options ? { ...h.options, dur } : { dur };
       this.ctx.simAPI?.highlight?.(h.id, opts);
@@ -137,7 +141,7 @@ export class ScriptPlayer {
       return;
     }
 
-    if (step.move){                  // << NOVO
+    if (step.move){
       const { to, by, dur=800, ease='easeInOut' } = step.move;
       const grp = this.ctx.simGroup;
       if (grp){
@@ -158,7 +162,9 @@ export class ScriptPlayer {
     }
 
     if (step.call){
-      const fn = this.ctx[step.call];
+      let fn = this.ctx[step.call];
+      if (!fn && this.ctx.simAPI) fn = this.ctx.simAPI[step.call];
+      
       if (typeof fn === 'function') await fn(step.args);
       return;
     }
@@ -174,7 +180,6 @@ export class ScriptPlayer {
       while(!this.abort && !(await maybeAsync(step.until))) await sleep(dt);
       return;
     }
-    // step.note -> ignorado
   }
 
   async _tweenValue(apply, from, to, dur, easeName){
@@ -193,7 +198,6 @@ export class ScriptPlayer {
       };
       this._raf = requestAnimationFrame(loop);
     });
-
     this._tweeners.delete(tweener);
   }
 
@@ -225,11 +229,10 @@ export class ScriptPlayer {
       };
       this._raf = requestAnimationFrame(loop);
     });
-
     this._tweeners.delete(tweener);
   }
 
-  async _tweenMove(toVec, dur, easeName){      // << NOVO
+  async _tweenMove(toVec, dur, easeName){
     const grp = this.ctx.simGroup;
     if (!grp) return;
     const ease = easings[easeName] || easings.easeInOut;
@@ -252,7 +255,6 @@ export class ScriptPlayer {
       };
       this._raf = requestAnimationFrame(loop);
     });
-
     this._tweeners.delete(tweener);
   }
 
@@ -280,12 +282,10 @@ export class ScriptPlayer {
       };
       this._raf = requestAnimationFrame(loop);
     });
-
     this._tweeners.delete(tweener);
   }
 }
 
-// ===== utils =====
 function sleep(ms){ return new Promise(r=>setTimeout(r, ms)); }
 function vec3(a){ return new THREE.Vector3(a[0], a[1], a[2]); }
 

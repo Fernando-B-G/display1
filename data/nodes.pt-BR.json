@@ -37,16 +37,30 @@
       { "say": "No próximo passo, ligamos essas linhas a saltos eletrônicos.", "dur": 3500 }
     ]
   },
-  "3": {
+"3": {
+    "title": "O Átomo de Bohr",
     "script": [
-      { "say": "Bohr propôs órbitas estáveis e níveis de energia quantizados.", "dur": 4200 },
-      { "camera": { "pos": [0.2, 0.4, 11.6], "lookAt": [0, 0, 0], "dur": 1000 } },
-      { "say": "Transições entre níveis emitem ou absorvem fótons com energias bem definidas.", "dur": 4600 },
-      { "wait": 1800 },
-      { "say": "O modelo explica as linhas do hidrogênio — mas não todos os detalhes finos.", "dur": 4500 },
-      { "wait": 2200 },
-      { "say": "A próxima etapa revela sutilezas: estrutura fina e spin.", "dur": 3600 },
-      { "wait": 2600 }
+      { "say": "No modelo de Bohr, o elétron só muda de órbita se ganhar ou perder a quantidade exata de energia." },
+
+      {"camera": { "pos": [0, 0, 22], "lookAt": [0, 0, 0], "dur": 1500} },
+      { "set": { "n": 2 } },
+      { "wait": 1000 },
+      { "say": "Para subir do nível 2 para o 3, ele precisa ABSORVER um fóton vermelho." },
+      
+      { "call": "triggerJump", "args": { "from": 2, "to": 3 } },
+      { "wait": 3000 },
+      
+      { "say": "Agora ele está excitado no nível 3. Para voltar, ele precisa EMITIR essa energia." },
+      { "call": "triggerJump", "args": { "from": 3, "to": 2 } },
+      { "wait": 2000 },
+
+      { "say": "Vamos tentar um salto maior. Do nível 2 para o 4 (Absorção de Ciano)." },
+      { "call": "triggerJump", "args": { "from": 2, "to": 4 } },
+      { "wait": 3000 },
+      
+      { "say": "E devolvendo a energia (Emissão de Ciano)..." },
+      { "call": "triggerJump", "args": { "from": 4, "to": 2 } },
+      { "say": "Experimente usar os controles manuais para ver outras cores." }
     ]
   },
   "4": {
