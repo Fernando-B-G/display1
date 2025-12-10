@@ -1,0 +1,187 @@
+// src/simulations/sims/bohr_3.js
+import * as THREE from 'three';
+// NÃO importamos attachUI para evitar sobrescrever nossa lógica customizada
+
+export function buildSim_3(group) {
+  // === Parâmetros de Estado ===
+  const params = {
+    n: 3,           // Nível quântico atual
+    speed: 1.0      // Velocidade da órbita
+  };
+
+  const state = {
+    angle: 0,
+    targetN: 3,
+    currentR: 1.5 * 3, // Raio atual (animado)
+    isJumping: false
+  };
+
+  // === Cena Local ===
+  const root = new THREE.Group();
+  group.add(root);
+
+  // 1. Núcleo
+  const nucleus = new THREE.Mesh(
+    new THREE.SphereGeometry(0.5, 32, 32),
+    new THREE.MeshStandardMaterial({ 
+      color: 0xff4444, 
+      emissive: 0x550000, 
+      roughness: 0.2,
+      metalness: 0.5
+    })
+  );
+  nucleus.name = 'nucleus';
+  root.add(nucleus);
+
+  // 2. Órbitas (anéis)
+  const orbits = [];
+  const maxN = 6;
+  
+  for (let i = 1; i <= maxN; i++) {
+    const r = 1.5 * i;
+    // TorusGeometry já é criado no plano XY (frente)
+    const geometry = new THREE.TorusGeometry(r, 0.04, 64, 100); 
+    const material = new THREE.MeshBasicMaterial({ 
+      color: 0xffffff, 
+      transparent: true, 
+      opacity: 0.1
+    });
+    const ring = new THREE.Mesh(geometry, material);
+    root.add(ring);
+    orbits.push(ring);
+  }
+
+  // 3. Elétron
+  const electron = new THREE.Mesh(
+    new THREE.SphereGeometry(0.18, 16, 16),
+    new THREE.MeshBasicMaterial({ color: 0x00ffff })
+  );
+  root.add(electron);
+
+  // 4. Fóton
+  const activePhotons = [];
+  const photonGeom = new THREE.SphereGeometry(0.12, 8, 8); 
+
+  function spawnPhoton(color, direction) {
+    const mat = new THREE.MeshBasicMaterial({ color: color });
+    const p = new THREE.Mesh(photonGeom, mat);
+    
+    // Nasce na posição do elétron
+    p.position.copy(electron.position);
+    
+    // Velocidade
+    p.userData = { 
+      vel: direction.clone().normalize().multiplyScalar(6.0), 
+      life: 3.0 
+    };
+    
+    root.add(p);
+    activePhotons.push(p);
+  }
+
+  // === Lógica de Física/Cores ===
+  function getColorForTransition(nFrom, nTo) {
+    // Série de Balmer (nf=2)
+    if (nTo === 2) {
+      if (nFrom === 3) return 0xff0000; // Vermelho
+      if (nFrom === 4) return 0x00ffff; // Ciano
+      if (nFrom === 5) return 0x0000ff; // Azul
+      if (nFrom === 6) return 0x8a2be2; // Violeta
+    }
+    // Fallback simples baseada na diferença de energia
+    const energyDiff = Math.abs(1/(nTo*nTo) - 1/(nFrom*nFrom));
+    // Mapeia diferença de energia grosseiramente para HUE (Vermelho=0 -> Azul=0.66)
+    const hue = Math.min(0.8, energyDiff * 3.0);
+    return new THREE.Color().setHSL(0.7 - hue*0.2, 1, 0.5); 
+  }
+
+  // === Atualização (Animação) ===
+  group.userData.anim = (dt) => {
+    // 1. Orbitar
+    state.angle += dt * params.speed * (5 / state.currentR); 
+    electron.position.x = Math.cos(state.angle) * state.currentR;
+    electron.position.y = Math.sin(state.angle) * state.currentR;
+
+    // 2. Animar raio (interpolação)
+    const targetR = 1.5 * state.targetN;
+    if (Math.abs(state.currentR - targetR) > 0.01) {
+      const lerpSpeed = dt * 3.0;
+      state.currentR += (targetR - state.currentR) * lerpSpeed;
+    } else {
+      state.currentR = targetR;
+      state.isJumping = false;
+    }
+
+    // 3. Destacar órbita atual
+    orbits.forEach((o, i) => {
+      const n = i + 1;
+      const isTarget = n === state.targetN;
+      o.material.opacity = isTarget ? 0.6 : 0.1;
+      o.material.color.setHex(isTarget ? 0xffff00 : 0xffffff);
+    });
+
+    // 4. Mover fótons
+    for (let i = activePhotons.length - 1; i >= 0; i--) {
+      const p = activePhotons[i];
+      p.position.addScaledVector(p.userData.vel, dt);
+      p.userData.life -= dt;
+      p.scale.setScalar(0.8 + 0.2 * Math.sin(p.userData.life * 10));
+
+      if (p.userData.life <= 0) {
+        root.remove(p);
+        p.material.dispose(); 
+        activePhotons.splice(i, 1);
+      }
+    }
+  };
+
+  // === API Customizada ===
+  // Definimos a API aqui e NÃO usamos attachUI, para garantir que triggerJump exista.
+  const api = {
+    set: (k, v) => {
+      if (k === 'n') {
+        const nextN = Math.round(v);
+        // Só dispara se mudou o nível
+        if (nextN !== state.targetN) {
+          api.triggerJump(state.targetN, nextN);
+        }
+      }
+      if (k === 'speed') params.speed = Number(v);
+    },
+    get: (k) => (k === 'n' ? state.targetN : params[k]),
+
+    triggerJump: (from, to) => {
+      // Ajuste de argumentos caso venha como objeto do JSON
+      if (typeof from === 'object' && from.from !== undefined) { 
+        to = from.to; 
+        from = from.from; 
+      }
+
+      state.targetN = to;
+      state.isJumping = true;
+      params.n = to; // Atualiza valor interno
+
+      // Se a energia diminuiu (orbitou para dentro), emite fóton
+      if (from > to) {
+        const color = getColorForTransition(from, to);
+        // Direção: do elétron para fora
+        const dir = electron.position.clone().normalize(); 
+        spawnPhoton(color, dir);
+      }
+    }
+  };
+
+  group.userData.api = api;
+
+  // === UI Schema Manual ===
+  group.userData.uiSchema = [
+    { id: 'n', label: 'Nível (n)', type: 'range', min: 1, max: 6, step: 1, value: 3 },
+    { id: 'speed', label: 'Velocidade', type: 'range', min: 0, max: 3, step: 0.1, value: 1.0 }
+  ];
+
+  group.userData.dispose = () => {
+    root.clear();
+    group.remove(root);
+    photonGeom.dispose(); 
+  };
+}
