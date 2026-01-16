@@ -3,20 +3,25 @@ import { refs } from '../core/state.js';
 import { getNodeGroups } from '../graph.js';
 import { updateCenterSim } from '../simulations/index.js';
 
-export function startLoop(){
-  function animate(){
+export function startLoop() {
+  function animate() {
     requestAnimationFrame(animate);
     const dt = refs.clock.getDelta();
 
     if (refs.starField) refs.starField.rotation.y += dt * 0.02;
 
     const nodeGroups = getNodeGroups(refs.mindmapGroup);
-    nodeGroups.forEach(node=>{
+    nodeGroups.forEach(node => {
       const { previewScene, previewCamera, rt, isActive, step, simRT } = node.userData || {};
       if (!rt) return;
 
-      const targetW = isActive ? 1024 : 480;
-      const targetH = isActive ?  576 : 270;
+      // Performance optimization: use optimized resolutions based on device tier
+      const settings = refs.performanceSettings || {
+        previewResolution: { width: 480, height: 270 },
+        activeResolution: { width: 1024, height: 576 }
+      };
+      const targetW = isActive ? settings.activeResolution.width : settings.previewResolution.width;
+      const targetH = isActive ? settings.activeResolution.height : settings.previewResolution.height;
       if (rt.width !== targetW || rt.height !== targetH) rt.setSize(targetW, targetH);
 
       refs.renderer.setRenderTarget(rt);

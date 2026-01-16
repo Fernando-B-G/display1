@@ -1,4 +1,6 @@
 // gesture.js
+import { detectPerformanceTier, getOptimizedSettings } from './performance.js';
+
 let handsInstance = null;
 let cameraInstance = null;
 let streamRef = null;
@@ -21,12 +23,15 @@ export async function preloadGesture() {
     streamRef = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
     videoEl.srcObject = streamRef;
 
+    // Performance optimization: get optimized settings
+    const settings = getOptimizedSettings();
+
     // cria Hands e “aquece”
     handsInstance = new window.Hands({
-      locateFile: (file)=>`https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
+      locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${file}`
     });
     handsInstance.setOptions({
-      maxNumHands: 4,
+      maxNumHands: settings.mediapipeHands,  // Adaptive: 2-4 based on performance tier
       modelComplexity: 0,
       minDetectionConfidence: 0.6,
       minTrackingConfidence: 0.6
@@ -35,10 +40,11 @@ export async function preloadGesture() {
     // roda a pipeline com alguns frames para “warm up”
     const warmup = new window.Camera(videoEl, {
       onFrame: async () => { await handsInstance.send({ image: videoEl }); },
-      width: 640, height: 480
+      width: settings.mediapipeResolution.width,
+      height: settings.mediapipeResolution.height
     });
     await warmup.start();
-    
+
     // roda ~10 frames
     await new Promise(r => setTimeout(r, 400));
     await warmup.stop();
@@ -51,13 +57,13 @@ export async function preloadGesture() {
   }
 }
 
-export async function startGesture(onUpdate){
+export async function startGesture(onUpdate) {
   await ensureScripts();
 
   // fallback teclado se câmera indisponível
   if (!navigator.mediaDevices?.getUserMedia) {
     enableKeyboardFallback(onUpdate);
-    return { stop: ()=>disableKeyboardFallback() };
+    return { stop: () => disableKeyboardFallback() };
   }
 
   // se ainda não preparamos, faça agora (vai pedir permissão 1x)
@@ -67,14 +73,14 @@ export async function startGesture(onUpdate){
   if (!handsInstance || !videoEl) {
     console.warn('Hands/câmera indisponíveis. Fallback O/C.');
     enableKeyboardFallback(onUpdate);
-    return { stop: ()=>disableKeyboardFallback() };
+    return { stop: () => disableKeyboardFallback() };
   }
 
   // instancia a câmera “definitiva” para a votação
-  handsInstance.onResults((res)=>{
-    let open=0, closed=0;
+  handsInstance.onResults((res) => {
+    let open = 0, closed = 0;
     if (res.multiHandLandmarks) {
-      res.multiHandLandmarks.forEach(lms=>{
+      res.multiHandLandmarks.forEach(lms => {
         const extended = countExtendedFingers(lms);
         if (extended >= 4) open++; else closed++;
       });
@@ -82,14 +88,17 @@ export async function startGesture(onUpdate){
     onUpdate({ open, closed });
   });
 
+  // Performance optimization: use optimized camera resolution
+  const settings = getOptimizedSettings();
   cameraInstance = new window.Camera(videoEl, {
-    onFrame: async ()=> { await handsInstance.send({ image: videoEl }); },
-    width: 640, height: 480
+    onFrame: async () => { await handsInstance.send({ image: videoEl }); },
+    width: settings.mediapipeResolution.width,
+    height: settings.mediapipeResolution.height
   });
   await cameraInstance.start();
 
   return {
-    stop: ()=>{
+    stop: () => {
       cameraInstance && cameraInstance.stop();
       cameraInstance = null;
       // NÃO paramos o stream nem destruímos o Hands para reuso em próximas votações
@@ -97,29 +106,29 @@ export async function startGesture(onUpdate){
   };
 }
 
-function countExtendedFingers(lms){
+function countExtendedFingers(lms) {
   const wrist = lms[0];
   let ext = 0;
-  [[8,5],[12,9],[16,13],[20,17]].forEach(([tip, base])=>{
+  [[8, 5], [12, 9], [16, 13], [20, 17]].forEach(([tip, base]) => {
     if (lms[tip].y < lms[base].y) ext++;
   });
   return ext;
 }
 
-function enableKeyboardFallback(onUpdate){
-  kbHandler = (e)=>{
-    if (e.key==='o' || e.key==='O') onUpdate({ open: 3, closed: 0 });
-    if (e.key==='c' || e.key==='C') onUpdate({ open: 0, closed: 3 });
+function enableKeyboardFallback(onUpdate) {
+  kbHandler = (e) => {
+    if (e.key === 'o' || e.key === 'O') onUpdate({ open: 3, closed: 0 });
+    if (e.key === 'c' || e.key === 'C') onUpdate({ open: 0, closed: 3 });
   };
   window.addEventListener('keydown', kbHandler);
 }
-function disableKeyboardFallback(){
+function disableKeyboardFallback() {
   if (kbHandler) window.removeEventListener('keydown', kbHandler);
-  kbHandler=null;
+  kbHandler = null;
 }
 
-async function ensureScripts(){
-  async function load(src){ return new Promise(r=>{ const s=document.createElement('script'); s.src=src; s.onload=r; s.async=true; document.head.appendChild(s); }); }
-  if (!window.Hands)   await load('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js');
-  if (!window.Camera)  await load('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js');
+async function ensureScripts() {
+  async function load(src) { return new Promise(r => { const s = document.createElement('script'); s.src = src; s.onload = r; s.async = true; document.head.appendChild(s); }); }
+  if (!window.Hands) await load('https://cdn.jsdelivr.net/npm/@mediapipe/hands/hands.min.js');
+  if (!window.Camera) await load('https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js');
 }
