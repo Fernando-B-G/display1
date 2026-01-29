@@ -3,14 +3,14 @@ import * as THREE from 'three';
 export function buildSim_1(group) {
   // === Parâmetros ===
   const params = {
-    source: 'Sol (Contínuo)', 
+    source: 'Sol (Contínuo)',
     speed: 1.5,
-    dispersion: 1.0 
+    dispersion: 1.0
   };
 
   const state = {
-    progress: 0, 
-    wavelengths: [] 
+    progress: 0,
+    wavelengths: []
   };
 
   // === Dimensões ===
@@ -21,6 +21,14 @@ export function buildSim_1(group) {
   // === Cena Local (Plano XY) ===
   const root = new THREE.Group();
   group.add(root);
+
+  // Iluminação (necessária para MeshPhysicalMaterial)
+  const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+  root.add(ambientLight);
+
+  const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  directionalLight.position.set(5, 5, 5);
+  root.add(directionalLight);
 
   // 1. Fonte de Luz (Esquerda)
   const sourceMesh = new THREE.Group();
@@ -41,16 +49,22 @@ export function buildSim_1(group) {
   const shape = new THREE.Shape();
   const size = 1.8;
   const h = size * Math.sqrt(3) / 2;
-  shape.moveTo(-size/2, -h/3);
-  shape.lineTo(size/2, -h/3);
-  shape.lineTo(0, h*2/3);
-  shape.lineTo(-size/2, -h/3);
-  
+  shape.moveTo(-size / 2, -h / 3);
+  shape.lineTo(size / 2, -h / 3);
+  shape.lineTo(0, h * 2 / 3);
+  shape.lineTo(-size / 2, -h / 3);
+
   const prismGeom = new THREE.ExtrudeGeometry(shape, { depth: 0.8, bevelEnabled: false });
-  prismGeom.translate(0, 0, -0.4); 
-  const prismMat = new THREE.MeshPhysicalMaterial({
-    color: 0xaaccff, transmission: 0.95, opacity: 0.6,
-    metalness: 0.1, roughness: 0, ior: 1.5, thickness: 1.5, transparent: true
+  prismGeom.translate(0, 0, -0.4);
+
+  // Usar MeshStandardMaterial com transparência simples (mais confiável)
+  const prismMat = new THREE.MeshStandardMaterial({
+    color: 0x8899ff,
+    transparent: true,
+    opacity: 0.25,
+    metalness: 0.1,
+    roughness: 0.2,
+    side: THREE.DoubleSide
   });
   const prism = new THREE.Mesh(prismGeom, prismMat);
   prism.position.set(0, 0, 0);
@@ -58,22 +72,22 @@ export function buildSim_1(group) {
 
   // 3. Anteparo (Direita) - Configuração Física
   const canvas = document.createElement('canvas');
-  canvas.width = 64; canvas.height = 512; 
+  canvas.width = 64; canvas.height = 512;
   const ctx = canvas.getContext('2d');
   const screenTex = new THREE.CanvasTexture(canvas);
-  
+
   // Mesh de colisão e visualização
   const screen = new THREE.Mesh(
     new THREE.PlaneGeometry(SCREEN_W, SCREEN_H),
     new THREE.MeshBasicMaterial({ map: screenTex, side: THREE.DoubleSide })
   );
-  
+
   // Posicionamento:
-  // X positivo, rotacionado -60 graus no Y para ficar de frente para o prisma e para a câmera
+  // X positivo, rotacionado -30 graus no Y para ficar de frente para o prisma e para a câmera
   screen.position.set(SCREEN_X, 0, 0);
-  screen.rotation.y = -Math.PI / 3; 
+  screen.rotation.y = -Math.PI / 6; // -30 graus para melhor alinhamento 
   screen.name = "ScreenSurface";
-  
+
   // Suporte visual (moldura)
   const frame = new THREE.Mesh(
     new THREE.BoxGeometry(SCREEN_W + 0.2, SCREEN_H + 0.2, 0.1),
@@ -81,8 +95,8 @@ export function buildSim_1(group) {
   );
   frame.position.copy(screen.position);
   frame.rotation.copy(screen.rotation);
-  frame.translateZ(-0.06); 
-  
+  frame.translateZ(-0.06);
+
   root.add(screen, frame);
 
   // Grupos de Feixes
@@ -98,7 +112,7 @@ export function buildSim_1(group) {
   // === Helpers ===
 
   function nmToColor(nm) {
-    let r=0, g=0, b=0;
+    let r = 0, g = 0, b = 0;
     if (nm >= 380 && nm < 440) { r = -(nm - 440) / (440 - 380); g = 0; b = 1; }
     else if (nm >= 440 && nm < 490) { r = 0; g = (nm - 440) / (490 - 440); b = 1; }
     else if (nm >= 490 && nm < 510) { r = 0; g = 1; b = -(nm - 510) / (510 - 490); }
@@ -110,11 +124,11 @@ export function buildSim_1(group) {
 
   function getAngle(nm) {
     // Verde (550nm) no centro (0 graus)
-    const centerNm = 550; 
-    const delta = (centerNm - nm); 
+    const centerNm = 550;
+    const delta = (centerNm - nm);
     // Calibração de abertura do leque
-    const scale = (0.4 / 200) * params.dispersion; 
-    return delta * scale; 
+    const scale = (0.4 / 200) * params.dispersion;
+    return delta * scale;
   }
 
   // === Construção da Luz ===
@@ -131,7 +145,7 @@ export function buildSim_1(group) {
       [436, 546, 577, 579].forEach(nm => state.wavelengths.push({ nm, color: nmToColor(nm) }));
     }
     rebuildBeams();
-    state.progress = 0; 
+    state.progress = 0;
   }
 
   function rebuildBeams() {
@@ -140,23 +154,26 @@ export function buildSim_1(group) {
 
     // 1. Feixe de Entrada (Mira Automática)
     const distToPrism = sourceMesh.position.distanceTo(prism.position);
-    // Geometria plana que nasce na origem e cresce para a direita (+X)
-    const inGeom = new THREE.PlaneGeometry(distToPrism, 0.25); 
-    inGeom.translate(distToPrism / 2, 0, 0); 
-    
+
+    // Usar BoxGeometry ao invés de PlaneGeometry para controle melhor da direção
+    // Cria um "raio" fino como uma caixa retangular
+    const inGeom = new THREE.BoxGeometry(distToPrism, 0.12, 0.02);
+    // Centraliza a geometria ao longo do eixo X (de 0 a distToPrism)
+    inGeom.translate(distToPrism / 2, 0, 0);
+
     const inColor = params.source.includes('Sol') ? 0xffffff : state.wavelengths[0].color;
-    const inMat = new THREE.MeshBasicMaterial({ 
-      color: inColor, transparent: true, opacity: 0.5, 
-      side: THREE.DoubleSide, blending: THREE.AdditiveBlending 
+    const inMat = new THREE.MeshBasicMaterial({
+      color: inColor, transparent: true, opacity: 0.5,
+      side: THREE.DoubleSide, blending: THREE.AdditiveBlending
     });
     const inBeam = new THREE.Mesh(inGeom, inMat);
-    
-    // Posiciona na fonte
+
+    // Posiciona na fonte (esquerda)
     inBeam.position.copy(sourceMesh.position);
-    // APONTA para o prisma (Garante a direção correta)
-    inBeam.lookAt(prism.position);
-    
+    // Não precisa de lookAt - a geometria já está orientada ao longo de +X
+
     incomingGroup.add(inBeam);
+
 
     // Atualiza a posição real da tela no mundo para o Raycaster não errar
     screen.updateMatrixWorld(true);
@@ -164,10 +181,10 @@ export function buildSim_1(group) {
     // 2. Feixes de Saída (Raycasting)
     state.wavelengths.forEach(wl => {
       const angle = getAngle(wl.nm);
-      
+
       // Vetor direção do raio (no plano XY)
       const dir = new THREE.Vector3(Math.cos(angle), Math.sin(angle), 0).normalize();
-      const origin = new THREE.Vector3(0,0,0); // Prisma
+      const origin = new THREE.Vector3(0, 0, 0); // Prisma
 
       // Dispara raio para achar onde bate na tela
       raycaster.set(origin, dir);
@@ -179,15 +196,15 @@ export function buildSim_1(group) {
       if (intersects.length > 0) {
         dist = intersects[0].distance;
         // Salva onde bateu na textura (0..1)
-        hitUV = intersects[0].uv.y; 
+        hitUV = intersects[0].uv.y;
       }
 
       // Cria feixe visual com comprimento exato
-      const outGeom = new THREE.PlaneGeometry(dist, 0.2); 
-      outGeom.translate(dist / 2, 0, 0); 
-      
+      const outGeom = new THREE.PlaneGeometry(dist, 0.1);
+      outGeom.translate(dist / 2, 0, 0);
+
       const outMat = new THREE.MeshBasicMaterial({
-        color: wl.color, transparent: true, 
+        color: wl.color, transparent: true,
         opacity: params.source.includes('Sol') ? 0.15 : 0.8,
         side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false
       });
@@ -197,7 +214,7 @@ export function buildSim_1(group) {
       outBeam.rotation.z = angle; // Rotaciona no plano XY
 
       outBeam.userData = { hitUV, color: wl.color };
-      outBeam.scale.x = 0; 
+      outBeam.scale.x = 0;
       outgoingGroup.add(outBeam);
     });
   }
@@ -212,21 +229,21 @@ export function buildSim_1(group) {
     }
 
     outgoingGroup.children.forEach(beam => {
-      const v = beam.userData.hitUV; 
+      const v = beam.userData.hitUV;
       const col = beam.userData.color;
-      
+
       if (v != null && v >= 0 && v <= 1) {
-        // Mapeia UV para pixel Y
-        const y = v * canvas.height;
-        
-        const h = params.source.includes('Sol') ? 16 : 4; 
+        // Mapeia UV para pixel Y (invertido porque UV.y cresce para cima mas canvas.y cresce para baixo)
+        const y = (1 - v) * canvas.height;
+
+        const h = params.source.includes('Sol') ? 16 : 4;
         const alpha = params.source.includes('Sol') ? 0.15 : 1.0;
 
         const grd = ctx.createLinearGradient(0, y - h, 0, y + h);
         grd.addColorStop(0, `rgba(0,0,0,0)`);
-        grd.addColorStop(0.5, `rgba(${col.r*255}, ${col.g*255}, ${col.b*255}, ${alpha})`);
+        grd.addColorStop(0.5, `rgba(${col.r * 255}, ${col.g * 255}, ${col.b * 255}, ${alpha})`);
         grd.addColorStop(1, `rgba(0,0,0,0)`);
-        
+
         ctx.fillStyle = grd;
         ctx.fillRect(0, y - h, canvas.width, h * 2);
       }
